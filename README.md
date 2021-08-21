@@ -180,8 +180,8 @@ samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
 seqOutBias hg38.fa ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=30
 seqOutBias hg38.fa ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=30
 ```
+# Parse gene annotations for pause index and exon / intron density
 
-# the next part is to estimate nascent RNA purity with exon / intron density ratio
 ```
 wget http://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.chr.gtf.gz
 #wget ftp://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz
@@ -237,7 +237,10 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
 #window 20-120 
 awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.104.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.pause.bed
 
+```
+# Run on efficiency
 
+```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
 sort -k4,4 Homo_sapiens.GRCh38.104.bed > Homo_sapiens.GRCh38.104.sorted.gene.bed
@@ -254,4 +257,6 @@ wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause
 ./pause_index.R ${name}_pause_body.bed
 
 ```
+
+# the next part is to estimate nascent RNA purity with exon / intron density ratio
 
