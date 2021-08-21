@@ -251,12 +251,27 @@ join -1 5 -2 4 ${name}_pause.bed Homo_sapiens.GRCh38.104.sorted.gene.bed | awk '
 #column ten is Pause index
 coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
 
+
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
-# RUN ON EFFICIENCY or PAUSE INDEX
+chmod +x pause_index.R
+
+
 
 ./pause_index.R ${name}_pause_body.bed
-
 ```
 
 # the next part is to estimate nascent RNA purity with exon / intron density ratio
+```
+
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
+
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
+
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
+chmod +x exon_intron_ratio.R
+./exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
+
+```
+
+
 
