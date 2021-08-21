@@ -89,7 +89,14 @@ if concodarnt alignmnet rate are low this supercedes rDNA alignment rate and mul
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
 alternatively, of the aligned reads, what fractino is rDNA:
-this is what PEPRO should do
+this is what PEPPRO should do
+
+extract concordant aligned reads from BAM
+this is useful as a metric to kno wwhether you want to sequence more, usually over 10 milion reads is good if you have 3+ replicates. 
+```
+concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
+```
+
 ```
 overall_alignment_considered=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$concordant_pe1 '{print $1/myvar}')
 ```
@@ -137,10 +144,8 @@ calculate dedup PE1 reads
 ```
 PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
 ```
-need to extract aligned reds from ${name}_bowtie2_hg38.log
-```
-concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-```
+
+
 divide
 ```
 factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
