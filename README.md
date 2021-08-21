@@ -189,22 +189,42 @@ gunzip Homo_sapiens.GRCh38.104.chr.gtf.gz
 
 #parse all TSS--exons 1
 grep 'exon_number "1"' Homo_sapiens.GRCh38.104.chr.gtf | \
+    sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' > Homo_sapiens.GRCh38.104.tss.bed
+    sed 's/"//g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.tss.bed
 
 #extract all exons
 grep 'exon_number' Homo_sapiens.GRCh38.104.chr.gtf | \
+    sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' > Homo_sapiens.GRCh38.104.all.exons.bed
+    sed 's/"//g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.bed
 
 
 #extract all complete gene annotations
 awk '$3 == "gene"' Homo_sapiens.GRCh38.104.chr.gtf | \
+    sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' > Homo_sapiens.GRCh38.104.bed
+    sed 's/"//g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.bed
+
+
+#identify and organize all exons within genes
+intersectBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.sorted.bed
+
+#merge intervals that overlap
+mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.104.all.exons.sorted.bed | awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.merged.bed
+
+#remove all first exons (where pause is)
+subtractBed -s -a Homo_sapiens.GRCh38.104.all.exons.merged.bed -b Homo_sapiens.GRCh38.104.tss.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.no.first.exons.bed
+
+
+#all introns named
+subtractBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.merged.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.introns.bed 
+
+#get gene names of exons
+intersectBed -s -wb -a Homo_sapiens.GRCh38.104.no.first.exons.bed -b Homo_sapiens.GRCh38.104.bed | awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.104.no.first.exons.named.bed
 
 
 ```
