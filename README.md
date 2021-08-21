@@ -194,16 +194,18 @@ grep 'exon_number "1"' Homo_sapiens.GRCh38.104.chr.gtf | \
     sed 's/"//g' > Homo_sapiens.GRCh38.104.tss.bed
 
 #extract all exons
-grep 'exon_number' Homo_sapiens.GRCh38.87.gtf | \
+grep 'exon_number' Homo_sapiens.GRCh38.104.gtf | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' > Homo_sapiens.GRCh38.87.all.exons.bed
+    sed 's/"//g' > Homo_sapiens.GRCh38.104.all.exons.bed
 
 
 #extract all complete gene annotations
-awk '$3 == "gene"' Homo_sapiens.GRCh38.87.gtf | \
+awk '$3 == "gene"' Homo_sapiens.GRCh38.104.gtf | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' > Homo_sapiens.GRCh38.87.bed
+    sed 's/"//g' > Homo_sapiens.GRCh38.104.bed
+
+
 ```
 
