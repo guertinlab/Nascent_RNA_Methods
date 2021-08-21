@@ -187,19 +187,20 @@ wget http://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38
 #wget ftp://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz
 gunzip Homo_sapiens.GRCh38.104.chr.gtf.gz
 
+#don't know why the chr is not present
 #parse all TSS--exons 1
 grep 'exon_number "1"' Homo_sapiens.GRCh38.104.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.tss.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.tss.bed
 
 #extract all exons
 grep 'exon_number' Homo_sapiens.GRCh38.104.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.bed
 
 
 #extract all complete gene annotations
@@ -207,7 +208,7 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.104.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.bed
 
 
 #identify and organize all exons within genes
@@ -226,6 +227,31 @@ subtractBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exo
 #get gene names of exons
 intersectBed -s -wb -a Homo_sapiens.GRCh38.104.no.first.exons.bed -b Homo_sapiens.GRCh38.104.bed | awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.104.no.first.exons.named.bed
 
+#then use coverageBed
+#load into R and use aggregate for gene name
+
+wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
+ 
+#first this
+#window 20-120 
+awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.104.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.pause.bed
+
+
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
+
+sort -k4,4 Homo_sapiens.GRCh38.104.bed > Homo_sapiens.GRCh38.104.sorted.gene.bed
+
+#discard anyhting with chr and strand inconsistencies
+join -1 5 -2 4 ${name}_pause.bed Homo_sapiens.GRCh38.104.sorted.gene.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
+
+#column ten is Pause index
+coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
+
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
+# RUN ON EFFICIENCY or PAUSE INDEX
+
+./pause_index.R ${name}_pause_body.bed
 
 ```
 
