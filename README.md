@@ -181,3 +181,29 @@ seqOutBias hg38.fa ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --
 seqOutBias hg38.fa ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=30
 ```
 
+# the next part is to estimate nascent RNA purity with exon / intron density ratio
+```
+wget http://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.chr.gtf.gz
+#wget ftp://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz
+gunzip Homo_sapiens.GRCh38.104.chr.gtf.gz
+
+#parse all TSS--exons 1
+grep 'exon_number "1"' Homo_sapiens.GRCh38.104.chr.gtf | \
+    awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
+    sed 's/";//g' | \
+    sed 's/"//g' > Homo_sapiens.GRCh38.104.tss.bed
+
+#extract all exons
+grep 'exon_number' Homo_sapiens.GRCh38.87.gtf | \
+    awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
+    sed 's/";//g' | \
+    sed 's/"//g' > Homo_sapiens.GRCh38.87.all.exons.bed
+
+
+#extract all complete gene annotations
+awk '$3 == "gene"' Homo_sapiens.GRCh38.87.gtf | \
+    awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
+    sed 's/";//g' | \
+    sed 's/"//g' > Homo_sapiens.GRCh38.87.bed
+```
+
