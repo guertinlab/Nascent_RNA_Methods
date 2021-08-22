@@ -1,12 +1,6 @@
 # Nascent_RNA_Methods
 
-this repository will 
-
-#this is just a placeholder
-
-Thinking about the structure, we should initialize all variables in a code chunk, like UMI and file name.
-Also, one time processing of files like hg38 and annotations should a separate section.
-
+# One time things
 Get code (put them in a path or leave them in the current directory)
 ```
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
