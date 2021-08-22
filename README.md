@@ -127,7 +127,6 @@ Remove adapters and filter adapter/adapter ligation products as well as 1 base i
 (cutadapt -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1_dedup.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
 
 (cutadapt -m $((UMI_length+2)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
-
 ```
 
 # DEGRADATION RNA INTEGRITY
@@ -142,7 +141,7 @@ flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${n
 rm ${name}_PE*_noadap.fastq.paired.fq
 ```
 
-# PROCESSING
+# PROCESSING FOR ALIGNMENT
 
 Trim the UMI, remove inserts of less than 10 bases, and reverse complement
 ```
