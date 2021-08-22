@@ -31,49 +31,51 @@ bowtie2-build hg38.fa hg38
 
 Parse gene annotations for pause index and exon / intron density
 ```
-wget http://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.chr.gtf.gz
-#wget ftp://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz
-gunzip Homo_sapiens.GRCh38.104.chr.gtf.gz
+#Go here to find the latest release number http://www.ensembl.org/index.html
+release=104
+
+wget http://ftp.ensembl.org/pub/release-${release}/gtf/homo_sapiens/Homo_sapiens.GRCh38.${release}.chr.gtf.gz
+gunzip Homo_sapiens.GRCh38.${release}.chr.gtf.gz
 
 #don't know why the chr is not present
 #parse all TSS--exons 1
-grep 'exon_number "1"' Homo_sapiens.GRCh38.104.chr.gtf | \
+grep 'exon_number "1"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.tss.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.tss.bed
 
 #extract all exons
-grep 'exon_number' Homo_sapiens.GRCh38.104.chr.gtf | \
+grep 'exon_number' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.bed
 
 
 #extract all complete gene annotations
-awk '$3 == "gene"' Homo_sapiens.GRCh38.104.chr.gtf | \
+awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.bed
 
 
 #identify and organize all exons within genes
-intersectBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.sorted.bed
+intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed
 
 #merge intervals that overlap
-mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.104.all.exons.sorted.bed | awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.merged.bed
+mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed | awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.merged.bed
 
 #remove all first exons (where pause is)
-subtractBed -s -a Homo_sapiens.GRCh38.104.all.exons.merged.bed -b Homo_sapiens.GRCh38.104.tss.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.no.first.exons.bed
+subtractBed -s -a Homo_sapiens.GRCh38.${release}.all.exons.merged.bed -b Homo_sapiens.GRCh38.${release}.tss.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.no.first.exons.bed
 
 
 #all introns named
-subtractBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.merged.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.introns.bed 
+subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.merged.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.introns.bed 
 
 #get gene names of exons
-intersectBed -s -wb -a Homo_sapiens.GRCh38.104.no.first.exons.bed -b Homo_sapiens.GRCh38.104.bed | awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.104.no.first.exons.named.bed
+intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo_sapiens.GRCh38.${release}.bed | awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed
 
 #then use coverageBed
 #load into R and use aggregate for gene name
@@ -83,12 +85,13 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
  
 #first this
 #window 20-120 
-awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.104.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.pause.bed
+awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
 
 ```
 
 Initialize variables
 ```
+release=104
 UMI_length=8
 cores=6
 directory=/Users/guertinlab/Downloads/Batch1 
@@ -173,6 +176,7 @@ If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and mul
 ```
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
+
 alternatively, of the aligned reads, what fraction is rDNA:
 this is what PEPPRO should do
 
