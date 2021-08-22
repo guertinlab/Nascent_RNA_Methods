@@ -19,9 +19,9 @@ gunzip ${name}_PE*.fastq.gz
 ```
 
 ```
-(cutadapt -m 10 -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
+(cutadapt -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
 
-(cutadapt -m 10 -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
+(cutadapt -m $((UMI_length+2)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
 
 ```
 
