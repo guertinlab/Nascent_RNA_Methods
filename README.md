@@ -105,7 +105,7 @@ name=LNCaP_10uMEnza_rep3_batch2
 # Begin
 ```
 cd $directory 
-echo ${name}
+echo $name
 gunzip ${name}_PE*.fastq.gz
 ```
 
