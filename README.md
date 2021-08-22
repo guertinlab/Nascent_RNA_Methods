@@ -3,138 +3,197 @@
 this repository will 
 
 #this is just a placeholder
-```
-cd /Users/guertinlab/Downloads/Batch1 
-```
 
 Thinking about the structure, we should initialize all variables in a code chunk, like UMI and file name.
 Also, one time processing of files like hg38 and annotations should a separate section.
 
+Get code (put them in a path or leave them in the current directory)
+```
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
+wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_pro.R
+wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/fqComplexity
 
+chmod +x insert_size.R
+chmod +x fqComplexity
+chmod +x complexity_pro.R
+```
+
+Build genomes
+```
+wget https://github.com/databio/ref_decoy/raw/master/human_rDNA.fa.gz
+gunzip human_rDNA.fa.gz
+bowtie2-build human_rDNA.fa human_rDNA
+
+wget https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz
+gunzip hg38.fa.gz
+bowtie2-build hg38.fa hg38
+```
+
+Parse gene annotations for pause index and exon / intron density
+```
+wget http://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.chr.gtf.gz
+#wget ftp://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz
+gunzip Homo_sapiens.GRCh38.104.chr.gtf.gz
+
+#don't know why the chr is not present
+#parse all TSS--exons 1
+grep 'exon_number "1"' Homo_sapiens.GRCh38.104.chr.gtf | \
+    sed 's/^/chr/' | \
+    awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
+    sed 's/";//g' | \
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.tss.bed
+
+#extract all exons
+grep 'exon_number' Homo_sapiens.GRCh38.104.chr.gtf | \
+    sed 's/^/chr/' | \
+    awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
+    sed 's/";//g' | \
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.bed
+
+
+#extract all complete gene annotations
+awk '$3 == "gene"' Homo_sapiens.GRCh38.104.chr.gtf | \
+    sed 's/^/chr/' | \
+    awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
+    sed 's/";//g' | \
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.bed
+
+
+#identify and organize all exons within genes
+intersectBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.sorted.bed
+
+#merge intervals that overlap
+mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.104.all.exons.sorted.bed | awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.merged.bed
+
+#remove all first exons (where pause is)
+subtractBed -s -a Homo_sapiens.GRCh38.104.all.exons.merged.bed -b Homo_sapiens.GRCh38.104.tss.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.no.first.exons.bed
+
+
+#all introns named
+subtractBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.merged.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.introns.bed 
+
+#get gene names of exons
+intersectBed -s -wb -a Homo_sapiens.GRCh38.104.no.first.exons.bed -b Homo_sapiens.GRCh38.104.bed | awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.104.no.first.exons.named.bed
+
+#then use coverageBed
+#load into R and use aggregate for gene name
+
+wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
+ 
+#first this
+#window 20-120 
+awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.104.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.pause.bed
 
 ```
+
+Initialize variables
+```
 UMI_length=8
+cores=6
+directory=/Users/guertinlab/Downloads/Batch1 
 
+#For if you run this in a loop
 name=$(echo $1 | awk -F"_PE1.fastq.gz" '{print $1}')
-name=LNCaP_10uMEnza_rep3_batch2
-echo ${name}
 
+#For manual naming
+name=LNCaP_10uMEnza_rep3_batch2
+```
+
+Begin
+```
+cd $directory 
+echo ${name}
 gunzip ${name}_PE*.fastq.gz
 ```
 
+First remove any bases beyond the adapter so that we can accurately identify duplicates
+(I don't think we need to save the output text, since we get the insert size distribution later)
+(Do you not want to do this in parallel?)
 ```
-(cutadapt -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
+cutadapt --cores=0 --action=retain -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_trimmed.fastq
+```
+
+Deduplicate
+```
+fqdedup -i ${name}_PE1_trimmed.fastq -o ${name}_PE1_dedup.fastq
+```
+
+Remove adapters and filter adapter/adapter ligation products as well as 1 base inserts
+I incorporate the fraction of reads that are adapter/adapter products as a metric below.
+```
+(cutadapt -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1_dedup.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
 
 (cutadapt -m $((UMI_length+2)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
 
 ```
 
-I incorporate the fraction of reads that are adapter/adapter products as a metric below.
-
-
-```
-fqdedup -i ${name}_PE1_noadap.fastq -o ${name}_PE1_dedup.fastq
-
-```
-
 # DEGRADATION RNA INTEGRITY
-
 ```
-reads=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
-fastq_pair -t $reads ${name}_PE1_dedup.fastq ${name}_PE2_noadap.fastq
+reads=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
+fastq_pair -t $reads ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
-flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_dedup.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
+flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 
-wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
-chmod +x insert_size.R
 ./insert_size.R ${name}.hist ${UMI_length}
 
-#I think we can delete these they are only used for insert size 
-rm ${name}_PE2_noadap.fastq.paired.fq
-rm ${name}_PE1_dedup.fastq.paired.fq
-
+rm ${name}_PE*_noadap.fastq.paired.fq
 ```
 
 # PROCESSING
 
+Trim the UMI, remove inserts of less than 10 bases, and reverse complement
 ```
-seqtk trimfq -b ${UMI_length} ${name}_PE1_dedup.fastq | seqtk seq -L 10 -r - > ${name}_PE1_processed.fastq
+seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE1_processed.fastq
+seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE2_processed.fastq
+```
 
-wget https://github.com/databio/ref_decoy/raw/master/human_rDNA.fa.gz
-
-gunzip human_rDNA.fa.gz
-bowtie2-build human_rDNA.fa human_rDNA
-bowtie2 -p 3 -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 4 - > ${name}_PE1.rDNA.fastq
-
-seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE2_noadap_trimmed.fastq
-
+Remove reads aligning to rDNA
+(I'm switching all flags to hex for consistency)
+```
+bowtie2 -p 3 -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
 
 reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
-fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_noadap_trimmed.fastq
+fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 ```
 
+Align to hg38
 ```
-#
-wget https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz
-gunzip hg38.fa.gz
-bowtie2-build hg38.fa hg38
-
-bowtie2 -p 3 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_noadap_trimmed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
+bowtie2 -p 3 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
 ```
-
-
-
 
 # rDNA ALIGNMENT RATE
-
 ```
 PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
 ```
 
 rRNA alignment rate (does not account for low genome alignment rates, so this can be artifically low if the concordant alignment rates are low)
-if concodarnt alignmnet rate are low this supercedes rDNA alignment rate and multiplying by the inverse of the concordant alugnment rate gives a better approximation of rDNA alignmetn rate
+If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and multiplying by the inverse of the concordant alignment rate gives a better approximation of rDNA alignment rate
 ```
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
-alternatively, of the aligned reads, what fractino is rDNA:
+alternatively, of the aligned reads, what fraction is rDNA:
 this is what PEPPRO should do
 
 extract concordant aligned reads from BAM
-this is useful as a metric to kno wwhether you want to sequence more, usually over 10 milion reads is good if you have 3+ replicates. 
+this is useful as a metric to know whether you want to sequence more, usually over 10 milion reads is good if you have 3+ replicates. 
 ```
 concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-```
 
-```
 overall_alignment_considered=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$concordant_pe1 '{print $1/myvar}')
 ```
-
-
-
 
 # FRACTION OF FILTERED READS THAT ARE MAPPABLE
 this is a QC metric in itself. Concordant alignment rate is typically above 90% for good libraries
 map is less stringently than concordantly mapped and most should map
-
 ```
 map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
 pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
 alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
 ```
 
-
-
 # COMPLEXITY AND THEORETICAL READ DEPTH
-
-```
-wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_pro.R
-wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/fqComplexity
-chmod +x fqComplexity
-chmod +x complexity_pro.R
-```
-put them in a path or leave them in the current directory
-
 
 calculate PE1 total raw reads
 ```
@@ -209,65 +268,6 @@ cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n
 I did not copy the code over here
 
 
-
-# Parse gene annotations for pause index and exon / intron density
-
-```
-wget http://ftp.ensembl.org/pub/release-104/gtf/homo_sapiens/Homo_sapiens.GRCh38.104.chr.gtf.gz
-#wget ftp://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/Homo_sapiens.GRCh38.87.gtf.gz
-gunzip Homo_sapiens.GRCh38.104.chr.gtf.gz
-
-#don't know why the chr is not present
-#parse all TSS--exons 1
-grep 'exon_number "1"' Homo_sapiens.GRCh38.104.chr.gtf | \
-    sed 's/^/chr/' | \
-    awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
-    sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.tss.bed
-
-#extract all exons
-grep 'exon_number' Homo_sapiens.GRCh38.104.chr.gtf | \
-    sed 's/^/chr/' | \
-    awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
-    sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.bed
-
-
-#extract all complete gene annotations
-awk '$3 == "gene"' Homo_sapiens.GRCh38.104.chr.gtf | \
-    sed 's/^/chr/' | \
-    awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
-    sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.bed
-
-
-#identify and organize all exons within genes
-intersectBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.sorted.bed
-
-#merge intervals that overlap
-mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.104.all.exons.sorted.bed | awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.all.exons.merged.bed
-
-#remove all first exons (where pause is)
-subtractBed -s -a Homo_sapiens.GRCh38.104.all.exons.merged.bed -b Homo_sapiens.GRCh38.104.tss.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.no.first.exons.bed
-
-
-#all introns named
-subtractBed -s -a Homo_sapiens.GRCh38.104.bed -b Homo_sapiens.GRCh38.104.all.exons.merged.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.introns.bed 
-
-#get gene names of exons
-intersectBed -s -wb -a Homo_sapiens.GRCh38.104.no.first.exons.bed -b Homo_sapiens.GRCh38.104.bed | awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.104.no.first.exons.named.bed
-
-#then use coverageBed
-#load into R and use aggregate for gene name
-
-wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
-sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
- 
-#first this
-#window 20-120 
-awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.104.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.104.pause.bed
-
-```
 # Run on efficiency
 
 ```
