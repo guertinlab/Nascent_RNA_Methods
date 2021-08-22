@@ -159,6 +159,8 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 ```
 
 Align to hg38
+
+Should we change --maxins to something like 1000? Default is 500. I guess this doesn't matter if we're going forward with all mapped PE1 reads, but I still prefer concordantly aligned reads.
 ```
 bowtie2 -p 3 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
 ```
