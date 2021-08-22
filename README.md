@@ -87,7 +87,7 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
 awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
 ```
 
-Initialize variables
+# Initialize variables
 ```
 release=104
 read_size=30
@@ -102,7 +102,7 @@ name=$(echo $1 | awk -F"_PE1.fastq.gz" '{print $1}')
 name=LNCaP_10uMEnza_rep3_batch2
 ```
 
-Begin
+# Begin
 ```
 cd $directory 
 echo ${name}
