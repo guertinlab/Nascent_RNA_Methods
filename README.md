@@ -7,7 +7,11 @@ this repository will
 cd /Users/guertinlab/Downloads/Batch1 
 ```
 
-#Could pass this in as argument 2 or just hard code it if it's unlikely to change
+Thinking about the structure, we should initialize all variables in a code chunk, like UMI and file name.
+Also, one time processing of files like hg38 and annotations should a separate section.
+
+
+
 ```
 UMI_length=8
 
@@ -24,6 +28,9 @@ gunzip ${name}_PE*.fastq.gz
 (cutadapt -m $((UMI_length+2)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
 
 ```
+
+I incorporate the fraction of reads that are adapter/adapter products as a metric below.
+
 
 ```
 fqdedup -i ${name}_PE1_noadap.fastq -o ${name}_PE1_dedup.fastq
@@ -138,9 +145,14 @@ calculate PE1 reads without adapters
 ```
 PE1_noadap=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 ```
-divide
+
+This inverse of this factor is a QC metric for percent adapter/adapter ligation products.
+
 ```
 factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap" | bc)
+
+echo fraction of reads that are not adapter/adapter ligation products
+echo $factorX | awk '{print 1/$1}'
 ```
 calculate dedup PE1 reads 
 ```
