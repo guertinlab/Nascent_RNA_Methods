@@ -255,7 +255,7 @@ reads is just too high
 the post-depulication factors are all individual QC metrics, so these should be considered individually to determine whether the library is high quality.
 
 
-#Get the reads in a BED
+# Get the reads in a BED
 
 I changed the flags here
 ```
@@ -290,7 +290,7 @@ coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b $
 ./pause_index.R ${name}_pause_body.bed
 ```
 
-# the next part is to estimate nascent RNA purity with exon / intron density ratio
+# Estimate nascent RNA purity with exon / intron density ratio
 ```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
