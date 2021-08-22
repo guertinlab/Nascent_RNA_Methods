@@ -204,24 +204,24 @@ calculate PE1 total raw reads
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 ```
 
+calculate PE1 deduplicated reads
+```
+PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
+```
+
 calculate PE1 reads without adapters 
 ```
 PE1_noadap=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 ```
 
-This inverse of this factor is a QC metric for percent adapter/adapter ligation products.
+This inverse of this factor is a QC metric for percent adapter/adapter ligation products (including 1 base inserts)
 
 ```
-factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap" | bc)
+factorX=$(echo "scale=2 ; $PE1_dedup / $PE1_noadap" | bc)
 
 echo fraction of reads that are not adapter/adapter ligation products
 echo $factorX | awk '{print 1/$1}'
 ```
-calculate dedup PE1 reads 
-```
-PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
-```
-
 
 divide
 ```
@@ -233,7 +233,7 @@ this curve lets you know the quality of the library in terms of it's complexity.
 if at 10 milion reads depth, 75% of the reads are unique, then it passes. The higher the better 
 
 ```
-./fqComplexity -i ${name}_PE1_noadap.fastq 
+./fqComplexity -i ${name}_PE1_trimmed.fastq 
 ```
 
 This curve is similar, but the goal is to estimate the raw read depth needed to acieve a target concordant aligned read count
