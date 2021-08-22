@@ -38,7 +38,9 @@ fastq_pair -t $reads ${name}_PE1_dedup.fastq ${name}_PE2_noadap.fastq
 
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_dedup.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 
-Rscript ~/rscripts/insert_size.R ${name}.hist ${UMI_length}
+wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/insert_size.R
+chmod +x insert_size.R
+./insert_size.R ${name}.hist ${UMI_length}
 
 #I think we can delete these they are only used for insert size 
 rm ${name}_PE2_noadap.fastq.paired.fq
