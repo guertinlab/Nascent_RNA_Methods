@@ -12,10 +12,14 @@ Get code (put them in a path or leave them in the current directory)
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
 wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_pro.R
 wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/fqComplexity
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
 
 chmod +x insert_size.R
 chmod +x fqComplexity
 chmod +x complexity_pro.R
+chmod +x pause_index.R
+chmod +x exon_intron_ratio.R
 ```
 
 Build genomes
@@ -59,7 +63,8 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
     sed 's/";//g' | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.bed
-
+    
+sort -k4,4 Homo_sapiens.GRCh38.${release}.bed > Homo_sapiens.GRCh38.${release}.sorted.gene.bed
 
 #identify and organize all exons within genes
 intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed
@@ -86,12 +91,12 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
 #first this
 #window 20-120 
 awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
-
 ```
 
 Initialize variables
 ```
 release=104
+read_size=30
 UMI_length=8
 cores=6
 directory=/Users/guertinlab/Downloads/Batch1 
@@ -171,6 +176,7 @@ PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
 ```
 
+Should we echo these QC metrics and/or save them somewhere?
 rRNA alignment rate (does not account for low genome alignment rates, so this can be artifically low if the concordant alignment rates are low)
 If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and multiplying by the inverse of the concordant alignment rate gives a better approximation of rDNA alignment rate
 ```
@@ -243,8 +249,9 @@ the two factors needed are the fraction of the total reads that are adapter/adap
 rearrange the equation for them?
 empirically noticed that copying and pasting the equation into R interprets the minus signs as hyphens
 
+I removed factorX here based on deduplicating happening first (trimming the junk keeps all reads). Also this makes it run the whole thing again, which takes time. Should we instead just have a calculator that takes the output of the first run, factorY, and desired concordant aligned reads and outputs the number of raw reads needed?
 ```
-./fqComplexity -i ${name}_PE1_noadap.fastq -x $factorX -y $factorY
+./fqComplexity -i ${name}_PE1_trimmed.fastq -y $factorY
 ```
 
 counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
@@ -252,15 +259,17 @@ reads is just too high
 the post-depulication factors are all individual QC metrics, so these should be considered individually to determine whether the library is high quality.
 
 
-# get the reads in a BED
-
+#Get the reads in a BED
+I changed the flags here
 ```
-samtools view -b -f 0x0040 ${name}.bam > ${name}_PE1.bam
-samtools view -bh -F 20 ${name}_PE1.bam > ${name}_PE1_plus.bam
+#samtools view -b -f 0x0040 ${name}.bam > ${name}_PE1.bam
+samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
+#samtools view -bh -F 20 ${name}_PE1.bam > ${name}_PE1_plus.bam
+samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
 samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
     
-seqOutBias hg38.fa ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=30
-seqOutBias hg38.fa ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=30
+seqOutBias hg38.fa ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size
+seqOutBias hg38.fa ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size
 
 awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"+"}' ${name}_PE1_plus.bed > ${name}_PE1_plus_strand.bed
 awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"-"}' ${name}_PE1_minus.bed > ${name}_PE1_minus_strand.bed
@@ -275,36 +284,24 @@ I did not copy the code over here
 # Run on efficiency
 
 ```
-coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
-
-sort -k4,4 Homo_sapiens.GRCh38.104.bed > Homo_sapiens.GRCh38.104.sorted.gene.bed
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
 #discard anyhting with chr and strand inconsistencies
-join -1 5 -2 4 ${name}_pause.bed Homo_sapiens.GRCh38.104.sorted.gene.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
+join -1 5 -2 4 ${name}_pause.bed Homo_sapiens.GRCh38.${release}.sorted.gene.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
 
 #column ten is Pause index
 coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
-
-
-wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
-chmod +x pause_index.R
-
-
 
 ./pause_index.R ${name}_pause_body.bed
 ```
 
 # the next part is to estimate nascent RNA purity with exon / intron density ratio
 ```
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
-coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
 
-coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
-
-wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
-chmod +x exon_intron_ratio.R
 ./exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
-
 ```
 
 
