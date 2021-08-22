@@ -256,11 +256,10 @@ the post-depulication factors are all individual QC metrics, so these should be 
 
 
 #Get the reads in a BED
+
 I changed the flags here
 ```
-#samtools view -b -f 0x0040 ${name}.bam > ${name}_PE1.bam
 samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
-#samtools view -bh -F 20 ${name}_PE1.bam > ${name}_PE1_plus.bam
 samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
 samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
     
