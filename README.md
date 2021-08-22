@@ -33,7 +33,7 @@ gunzip hg38.fa.gz
 bowtie2-build hg38.fa hg38
 ```
 
-Parse gene annotations for pause index and exon / intron density
+Parse gene annotations for use in calculating pause index and exon / intron density
 ```
 #Go here to find the latest release number http://www.ensembl.org/index.html
 release=104
