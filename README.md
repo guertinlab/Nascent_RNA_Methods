@@ -281,9 +281,9 @@ chmod +x pause_index.R
 # the next part is to estimate nascent RNA purity with exon / intron density ratio
 ```
 
-coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
-coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
+coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.104.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
 
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
 chmod +x exon_intron_ratio.R
