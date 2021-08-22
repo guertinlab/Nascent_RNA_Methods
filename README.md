@@ -111,6 +111,7 @@ gunzip ${name}_PE*.fastq.gz
 
 First remove any bases beyond the adapter so that we can accurately identify duplicates
 (I don't think we need to save the output text, since we get the insert size distribution later)
+
 (Do you not want to do this in parallel?)
 ```
 cutadapt --cores=0 --action=retain -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_trimmed.fastq
@@ -122,7 +123,6 @@ fqdedup -i ${name}_PE1_trimmed.fastq -o ${name}_PE1_dedup.fastq
 ```
 
 Remove adapters and filter adapter/adapter ligation products as well as 1 base inserts
-I incorporate the fraction of reads that are adapter/adapter products as a metric below.
 ```
 (cutadapt -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1_dedup.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
 
