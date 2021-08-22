@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 Args=commandArgs(TRUE)
 insert.histogram = Args[1]
 #ratio.degraded.intact = Args[2]
