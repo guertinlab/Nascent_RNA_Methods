@@ -31,7 +31,8 @@ Parse gene annotations for use in calculating pause index and exon / intron dens
 ```
 #Go here to find the latest release number http://www.ensembl.org/index.html
 release=104
-
+```
+```
 wget http://ftp.ensembl.org/pub/release-${release}/gtf/homo_sapiens/Homo_sapiens.GRCh38.${release}.chr.gtf.gz
 gunzip Homo_sapiens.GRCh38.${release}.chr.gtf.gz
 
