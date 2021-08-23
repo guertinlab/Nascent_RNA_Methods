@@ -7,6 +7,8 @@ Get code (put them in a path or leave them in the current directory)
 
 what other software dependencies do we need?
 
+wget
+
 bowtie2 
 
 seqtk
@@ -74,7 +76,6 @@ grep 'exon_number' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/";//g' | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.bed
 
-
 #extract all complete gene annotations
 awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
@@ -92,7 +93,6 @@ mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.sorted.
 
 #remove all first exons (where pause is)
 subtractBed -s -a Homo_sapiens.GRCh38.${release}.all.exons.merged.bed -b Homo_sapiens.GRCh38.${release}.tss.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.no.first.exons.bed
-
 
 #all introns named
 subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.merged.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.introns.bed 
@@ -303,7 +303,7 @@ I did not copy the code over here
 ```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
-#discard anyhting with chr and strand inconsistencies
+#discard anything with chr and strand inconsistencies
 join -1 5 -2 4 ${name}_pause.bed Homo_sapiens.GRCh38.${release}.sorted.gene.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
 
 #column ten is Pause index
