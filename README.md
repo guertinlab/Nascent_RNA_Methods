@@ -90,16 +90,21 @@ awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print 
 
 # Initialize variables
 ```
+#Ensembl release used above to parse gene annotations
 release=104
-read_size=30
+#Length of UMI on 5' adapter
 UMI_length=8
+#PE1 insert size (read length minus UMI length)
+read_size=30
+#Number of cores to be used in bowtie2 for parallel processing
 cores=6
+#Directory where the files are
 directory=/Users/guertinlab/Downloads/Batch1 
 
-#For if you run this in a loop
+#File prefix if you run this in a loop
 name=$(echo $1 | awk -F"_PE1.fastq.gz" '{print $1}')
 
-#For manual naming
+#File prefix for an individual sample (remove ".fastq.gz" from the file name)
 name=LNCaP_10uMEnza_rep3_batch2
 ```
 
@@ -112,13 +117,13 @@ gunzip ${name}_PE*.fastq.gz
 
 Remove adapter sequences and inserts less than 10 bases
 
-(Do you not want to do this in parallel?)
+(We can also do --cores=$cores or just not do it in parallel if it's going to cause issues)
 ```
 (cutadapt --cores=0 -m $((UMI_length+10)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
 (cutadapt --cores=0 -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
 ```
 
-Remove PCR duplicates
+Remove PCR duplicates from PE1
 ```
 fqdedup -i ${name}_PE1_noadap.fastq -o ${name}_PE1_dedup.fastq
 ```
