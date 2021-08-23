@@ -109,24 +109,17 @@ echo $name
 gunzip ${name}_PE*.fastq.gz
 ```
 
-First remove any bases beyond the adapter so that we can accurately identify duplicates
-(I don't think we need to save the output text, since we get the insert size distribution later)
+Remove adapter sequences and inserts less than 10 bases
 
 (Do you not want to do this in parallel?)
 ```
-cutadapt --cores=0 --action=retain -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_trimmed.fastq
+(cutadapt --cores=0 -m $((UMI_length+10)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
+(cutadapt --cores=0 -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
 ```
 
-Deduplicate
+Remove PCR duplicates
 ```
-fqdedup -i ${name}_PE1_trimmed.fastq -o ${name}_PE1_dedup.fastq
-```
-
-Remove adapters and filter adapter/adapter ligation products as well as 1 base inserts
-```
-(cutadapt -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1_dedup.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq ) > ${name}_PE1_cutadapt.txt
-
-(cutadapt -m $((UMI_length+2)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq ) > ${name}_PE2_cutadapt.txt
+fqdedup -i ${name}_PE1_noadap.fastq -o ${name}_PE1_dedup.fastq
 ```
 
 # DEGRADATION RNA INTEGRITY
@@ -143,10 +136,10 @@ rm ${name}_PE*_noadap.fastq.paired.fq
 
 # PROCESSING FOR ALIGNMENT
 
-Trim the UMI, remove inserts of less than 10 bases, and reverse complement
+Trim the UMI and reverse complement
 ```
-seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE1_processed.fastq
-seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE2_processed.fastq
+seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
+seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 
 Remove reads aligning to rDNA
@@ -206,11 +199,6 @@ calculate PE1 total raw reads
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 ```
 
-calculate PE1 deduplicated reads
-```
-PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
-```
-
 calculate PE1 reads without adapters 
 ```
 PE1_noadap=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
@@ -219,10 +207,15 @@ PE1_noadap=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 This inverse of this factor is a QC metric for percent adapter/adapter ligation products (including 1 base inserts)
 
 ```
-factorX=$(echo "scale=2 ; $PE1_dedup / $PE1_noadap" | bc)
+factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap" | bc)
 
 echo fraction of reads that are not adapter/adapter ligation products
 echo $factorX | awk '{print 1/$1}'
+```
+
+calculate PE1 deduplicated reads
+```
+PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
 ```
 
 divide
@@ -235,7 +228,7 @@ this curve lets you know the quality of the library in terms of it's complexity.
 if at 10 milion reads depth, 75% of the reads are unique, then it passes. The higher the better 
 
 ```
-./fqComplexity -i ${name}_PE1_trimmed.fastq 
+./fqComplexity -i ${name}_PE1_noadap.fastq 
 ```
 
 This curve is similar, but the goal is to estimate the raw read depth needed to acieve a target concordant aligned read count
@@ -247,7 +240,7 @@ empirically noticed that copying and pasting the equation into R interprets the 
 
 I removed factorX here based on deduplicating happening first (trimming the junk keeps all reads). Also this makes it run the whole thing again, which takes time. Should we instead just have a calculator that takes the output of the first run, factorY, and desired concordant aligned reads and outputs the number of raw reads needed?
 ```
-./fqComplexity -i ${name}_PE1_trimmed.fastq -y $factorY
+./fqComplexity -i ${name}_PE1_noadap.fastq -x factorX -y $factorY
 ```
 
 counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
