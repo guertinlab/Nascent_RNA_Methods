@@ -6,14 +6,23 @@ Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleot
 Get code (put them in a path or leave them in the current directory) 
 
 what other software dependencies do we need?
+
 bowtie2 
+
 seqtk
+
 cutadapt
+
 fastq_pair
+
 bedtools
-fqdedup 
-samtools 
+
+fqdedup
+
+samtools
+
 seqOutBias
+
 flash
 
 ```
