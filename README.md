@@ -1,11 +1,21 @@
 # Nascent_RNA_Methods
 
-Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published nascent RNA processing pipeline (PEPPRO) into individual components. By presenting the analysis in a transparent manner, the user can adopt the analysis framework and modify the workflow as needed. We detail the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
+Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published nascent RNA processing pipeline (PEPPRO) into individual components. By presenting the analysis in a transparent manner, the user can adopt the analysis framework and modify the workflow as needed. We describe the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
 
 # One time things
 Get code (put them in a path or leave them in the current directory) 
 
 what other software dependencies do we need?
+bowtie2 
+seqtk
+cutadapt
+fastq_pair
+bedtools
+fqdedup 
+samtools 
+seqOutBias
+flash
+
 ```
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
 wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_pro.R
