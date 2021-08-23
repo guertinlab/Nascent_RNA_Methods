@@ -267,7 +267,7 @@ the two factors needed are the fraction of the total reads that are adapter/adap
 rearrange the equation for them?
 empirically noticed that copying and pasting the equation into R interprets the minus signs as hyphens
 
-I removed factorX here based on deduplicating happening first (trimming the junk keeps all reads). Also this makes it run the whole thing again, which takes time. Should we instead just have a calculator that takes the output of the first run, factorY, and desired concordant aligned reads and outputs the number of raw reads needed?
+Change to not have it re-do the subsampling and deduplicating
 ```
 ./fqComplexity -i ${name}_PE1_noadap.fastq -x factorX -y $factorY
 ```
