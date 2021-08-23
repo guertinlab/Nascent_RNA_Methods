@@ -1,27 +1,27 @@
 # Nascent_RNA_Methods
 
-Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published nascent RNA processing pipeline (PEPPRO) into individual components. The analyses are presented as individual code chunks with comprehensive details. Our hope is that the end users will adopt the analysis framework and modify the workflow as needed. We describe the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
+Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published nascent RNA processing pipeline (PEPPRO) into its components. The analyses are presented as individual code chunks with comprehensive details. Our hope is that the end users will adopt the analysis framework and modify the workflow as needed. We describe the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
 
 # One time things
-Get code (put them in a path or leave them in the current directory) 
 
-what other software dependencies do we need?
+Although we present novel quality control metrics and specialized software herein, most of the workflow depends upon more generalized software. Fortunately, this software is well-maintained and documented, so we only provide a short description and the links below. All this software should be moved to a directory within the `$PATH` variable.      
 
-wget
 
-bowtie2 
+`wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
 
-seqtk
+`bowtie2` : aligns sequence reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 
-cutadapt
+`seqtk` : a multifunctional toolkit for processing sequence files. We only exploit two functionalities: trimming a define number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
 
-fastq_pair
+`cutadapt` : removes a defined sequence, such as adapter sequence, from sequence reads.  https://cutadapt.readthedocs.io/en/stable/
 
-bedtools
+`fastq_pair` : outputs only sequence reads that have a matched paired end read and a separate output for unpaired reads. https://github.com/linsalrob/fastq-pair 
 
-fqdedup
+`bedtools` :  a comprehensive suite of tools that efficiently operate on genomic intervals.  https://bedtools.readthedocs.io/en/latest/
 
-samtools
+`fqdedup` : remove duplicated sequences from FASTQ files.
+
+`samtools` : 
 
 seqOutBias
 
