@@ -38,9 +38,9 @@ wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/inser
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
 
-chmod +x insert_size.R
 chmod +x fqComplexity
 chmod +x complexity_pro.R
+chmod +x insert_size.R
 chmod +x pause_index.R
 chmod +x exon_intron_ratio.R
 ```
