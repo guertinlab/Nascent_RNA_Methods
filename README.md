@@ -64,8 +64,9 @@ bowtie2-build human_rDNA.fa human_rDNA
 
 ## Reference gene annotation
 
-The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. 
+The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations--note that a single gene can have multiple first exons due to the presence of different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name. The output of this is piped to `awk`, which prints the indicated fields. Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" as opposed to "chrMT". Finally the output is sorted by the first, then second  column, in ascending order. The resultant BED6 files for the exons include the chromosome coordinates in columns 1-3, Ensembl transcript ID (ENST), gene name, and strand information.    
 
+Ensembl transcript ID ENST Ensembl Gene ID ENSG
 
 ```
 
@@ -74,8 +75,7 @@ release=104
 wget http://ftp.ensembl.org/pub/release-${release}/gtf/homo_sapiens/Homo_sapiens.GRCh38.${release}.chr.gtf.gz
 gunzip Homo_sapiens.GRCh38.${release}.chr.gtf.gz
 
-#don't know why the chr is not present
-#parse all TSS--exons 1
+# extract all exon 1 annotations
 grep 'exon_number "1"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
