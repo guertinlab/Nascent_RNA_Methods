@@ -140,7 +140,7 @@ Lastly, we retrieve, sort, and harmonize chromosome size information.
 ```
 wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
 
-#sort chromosome sizes 
+#sort chromosome sizes and harmonize chrM name
 sort -k1,1 -k2,2n hg38.chrom.sizes | \
     sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
     
