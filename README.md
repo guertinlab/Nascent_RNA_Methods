@@ -99,7 +99,8 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
 sort -k4,4 Homo_sapiens.GRCh38.${release}.bed > Homo_sapiens.GRCh38.${release}.sorted.gene.bed
 
 #identify and organize all exons within genes
-intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed
+intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed
 
 #merge intervals that overlap
 mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed | \
