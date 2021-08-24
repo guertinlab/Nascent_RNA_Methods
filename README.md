@@ -11,7 +11,7 @@ Although we present novel quality control metrics and specialized software herei
 
 `bowtie2` : aligns sequence reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 
-`seqtk` : a multifunctional toolkit for processing sequence files. We only exploit two functionalities: trimming a define number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
+`seqtk` : a multifunctional toolkit for processing sequence files. We only use two functionalities: trimming a define number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
 
 `cutadapt` : removes a defined sequence, such as adapter sequence, from sequence reads.  https://cutadapt.readthedocs.io/en/stable/
 
@@ -19,18 +19,22 @@ Although we present novel quality control metrics and specialized software herei
 
 `bedtools` :  a comprehensive suite of tools that efficiently operate on genomic intervals.  https://bedtools.readthedocs.io/en/latest/
 
-`fqdedup` : remove duplicated sequences from FASTQ files.
+`fqdedup` : remove duplicated sequences from FASTQ files. https://github.com/guertinlab/fqdedup
 
-`samtools` : 
+`samtools` : a suite of tools for parsing and interfacing with high throughput sequencing data files. http://www.htslib.org
 
-seqOutBias
+`seqOutBias` : software designed to correct enzymatic sequence biases that also has options to output BED and bigWig files with desired features. https://github.com/guertinlab/seqOutBias
 
-flash
+`FLASH` : merges paired end reads by detectign overlap. https://ccb.jhu.edu/software/FLASH/ 
+
+
+In addition, we developed the following software and R scripts to analyze the data and graph the output:
+
 
 ```
-wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
-wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_pro.R
 wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/fqComplexity
+wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_pro.R
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
 
