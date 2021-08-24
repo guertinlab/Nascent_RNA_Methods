@@ -102,26 +102,37 @@ sort -k4,4 Homo_sapiens.GRCh38.${release}.bed > Homo_sapiens.GRCh38.${release}.s
 intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed
 
 #merge intervals that overlap
-mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed | awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.merged.bed
+mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed | \
+    awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | 
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.merged.bed
 
 #remove all first exons (where pause is)
-subtractBed -s -a Homo_sapiens.GRCh38.${release}.all.exons.merged.bed -b Homo_sapiens.GRCh38.${release}.tss.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.no.first.exons.bed
+subtractBed -s -a Homo_sapiens.GRCh38.${release}.all.exons.merged.bed -b Homo_sapiens.GRCh38.${release}.tss.bed | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.no.first.exons.bed
 
 #all introns named
-subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.merged.bed | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.introns.bed 
+subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.merged.bed | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.introns.bed 
 
 #get gene names of exons
-intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo_sapiens.GRCh38.${release}.bed | awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed
+intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo_sapiens.GRCh38.${release}.bed | \
+    awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | \
+    sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed
 
 #then use coverageBed
 #load into R and use aggregate for gene name
 
 wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
-sort -k1,1 -k2,2n hg38.chrom.sizes | sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
+
+sort -k1,1 -k2,2n hg38.chrom.sizes | \
+    sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
  
 #first this
 #window 20-120 
-awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
+awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} \
+    $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
+    
 ```
 
 # Initialize variables
@@ -140,7 +151,7 @@ directory=/Users/guertinlab/Downloads/Batch1
 #File prefix if you run this in a loop
 name=$(echo $1 | awk -F"_PE1.fastq.gz" '{print $1}')
 
-#File prefix for an individual sample (remove ".fastq.gz" from the file name)
+#File prefix for an individual sample (remove ".fastq.gz" and PE1 designation from the file name)
 name=LNCaP_10uMEnza_rep3_batch2
 ```
 
