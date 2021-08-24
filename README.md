@@ -1,10 +1,12 @@
 # Nascent_RNA_Methods
 
-Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published nascent RNA processing pipeline (PEPPRO) into its components. The analyses are presented as individual code chunks with comprehensive details. PRO-seq experiments are evolving and variations can be found throughout the literature. We describe analysis of paired end libraries that contain a unique molecular identifier on the the 5´ adapter adjacent to the RNA insert. These two features allow for calculations of RNA fragment length and library complexity. Our hope is that the end users will adopt the analysis framework and modify the workflow as needed. We describe and provide the code to calculate the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
+Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published genomic nascent RNA processing pipeline (PEPPRO) into its components. The analyses are presented as individual code chunks with comprehensive details. PRO-seq experiments are evolving and variations can be found throughout the literature. We describe analysis of paired end libraries that contain a unique molecular identifier on the the 5´ adapter adjacent to the RNA insert. These two features allow for calculations of RNA fragment length and library complexity. Our hope is that the end users will adopt the analysis framework and modify the workflow as needed. We describe and provide the code to calculate the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
 
 # One time things
 
-Although we present novel quality control metrics and specialized software herein, most of the workflow depends upon more generalized software. Fortunately, this software is well-maintained and documented, so we only provide a short description and the links below. All this software should be moved to a directory within the `$PATH` variable.      
+## Dependencies, software, and scripts
+
+Although we present novel quality control metrics and specialized software herein, most of the workflow depends upon more general software. Fortunately, this software is well-maintained and documented, so we only provide a short description and the links below. 
 
 
 `wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
@@ -28,7 +30,7 @@ Although we present novel quality control metrics and specialized software herei
 `FLASH` : merges paired end reads by detectign overlap. https://ccb.jhu.edu/software/FLASH/ 
 
 
-In addition, to facilitate data analysis and graphical output, we developed the following software and R scripts that should be moved to a directory in the `$PATH` variable:
+In addition, to facilitate data analysis and graphical output, we developed the software and R scripts. The following code uses `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
 
 
 ```
@@ -44,8 +46,9 @@ chmod +x complexity_pro.R
 chmod +x pause_index.R
 chmod +x exon_intron_ratio.R
 ```
+The software dependencies and R scripts should be moved to a directory within the `$PATH` variable.      
 
-Build genomes
+## Reference genomes
 ```
 wget https://github.com/databio/ref_decoy/raw/master/human_rDNA.fa.gz
 gunzip human_rDNA.fa.gz
