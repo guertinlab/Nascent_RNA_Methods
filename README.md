@@ -62,12 +62,15 @@ gunzip human_rDNA.fa.gz
 bowtie2-build human_rDNA.fa human_rDNA
 ```
 
-Parse gene annotations for use in calculating pause index and exon / intron density
+## Reference gene annotation
+
+Parse gene annotations for use in calculating pause index and exon / intron density Go here to find the latest release number http://www.ensembl.org/index.html
+
+
 ```
-#Go here to find the latest release number http://www.ensembl.org/index.html
+
 release=104
-```
-```
+
 wget http://ftp.ensembl.org/pub/release-${release}/gtf/homo_sapiens/Homo_sapiens.GRCh38.${release}.chr.gtf.gz
 gunzip Homo_sapiens.GRCh38.${release}.chr.gtf.gz
 
