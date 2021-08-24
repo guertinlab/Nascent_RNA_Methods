@@ -1,6 +1,6 @@
 # Nascent_RNA_Methods
 
-Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published nascent RNA processing pipeline (PEPPRO) into its components. The analyses are presented as individual code chunks with comprehensive details. Our hope is that the end users will adopt the analysis framework and modify the workflow as needed. We describe the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
+Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published nascent RNA processing pipeline (PEPPRO) into its components. The analyses are presented as individual code chunks with comprehensive details. PRO-seq experiments are evolving and variations can be found throughout the literature. We describe analysis of paired end libraries that contain a unique molecular identifier on the the 5´ adapter. These two features allow for calculations of RNA fragment length and library complexity. Our hope is that the end users will adopt the analysis framework and modify the workflow as needed. We describe the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
 
 # One time things
 
