@@ -49,14 +49,17 @@ chmod +x exon_intron_ratio.R
 The software dependencies and R scripts should be moved to a directory within the `$PATH` variable.      
 
 ## Reference genomes
-```
-wget https://github.com/databio/ref_decoy/raw/master/human_rDNA.fa.gz
-gunzip human_rDNA.fa.gz
-bowtie2-build human_rDNA.fa human_rDNA
 
+PRO-seq experiments have been performed in a variety of organisms including yeast (cite Booth), Drosophila (cite Kwak and cite Duarte), and humans (cite Sathyan). Analysis of the data requires alignment to a reference genome annotation. The first step is to use `wget` to retrieve the zipped reference genome. Many websites host the assembly data and one can simply use Google the organism name combined with the term "reference genome" to find the appropriate FASTA file. The `gunzip` command unzips the refence genome file and `bowtie2-build` indexes the file to allow for efficient alignment. The code also retrieves, unzips, and builds the human rDNA reference genome (cite refgenie). 
+
+```
 wget https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz
 gunzip hg38.fa.gz
 bowtie2-build hg38.fa hg38
+
+wget https://github.com/databio/ref_decoy/raw/master/human_rDNA.fa.gz
+gunzip human_rDNA.fa.gz
+bowtie2-build human_rDNA.fa human_rDNA
 ```
 
 Parse gene annotations for use in calculating pause index and exon / intron density
