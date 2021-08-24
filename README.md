@@ -11,13 +11,13 @@ Although we present novel quality control metrics and specialized software herei
 
 `bowtie2` : aligns sequence reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 
-`seqtk` : a multifunctional toolkit for processing sequence files. We only use two functionalities: trimming a define number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
+`seqtk` : a multifunctional toolkit for processing sequence files. We only use two functionalities: trimming a defined number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
 
 `cutadapt` : removes a defined sequence, such as adapter sequence, from sequence reads.  https://cutadapt.readthedocs.io/en/stable/
 
-`fastq_pair` : outputs only sequence reads that have a matched paired end read and a separate output for unpaired reads. https://github.com/linsalrob/fastq-pair 
+`fastq_pair` : outputs only sequence reads that have a matched paired end read and a separates unpaired reads. https://github.com/linsalrob/fastq-pair 
 
-`bedtools` :  a comprehensive suite of tools that efficiently operate on genomic intervals.  https://bedtools.readthedocs.io/en/latest/
+`bedtools` :  a comprehensive suite of tools that efficiently perform a wide range of operations on genomic intervals.  https://bedtools.readthedocs.io/en/latest/
 
 `fqdedup` : remove duplicated sequences from FASTQ files. https://github.com/guertinlab/fqdedup
 
