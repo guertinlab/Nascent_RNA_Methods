@@ -28,7 +28,7 @@ Although we present novel quality control metrics and specialized software herei
 `FLASH` : merges paired end reads by detectign overlap. https://ccb.jhu.edu/software/FLASH/ 
 
 
-In addition, we developed the following software and R scripts to analyze the data and graph the output:
+In addition, to facilitate data analysis and graphical output, we developed the following software and R scripts that should be moved to a directory in the `$PATH` variable:
 
 
 ```
@@ -38,9 +38,9 @@ wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/inser
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
 
+chmod +x insert_size.R
 chmod +x fqComplexity
 chmod +x complexity_pro.R
-chmod +x insert_size.R
 chmod +x pause_index.R
 chmod +x exon_intron_ratio.R
 ```
@@ -161,8 +161,7 @@ reads=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 fastq_pair -t $reads ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
-
-./insert_size.R ${name}.hist ${UMI_length}
+insert_size.R ${name}.hist ${UMI_length}
 
 rm ${name}_PE*_noadap.fastq.paired.fq
 ```
@@ -261,7 +260,7 @@ this curve lets you know the quality of the library in terms of it's complexity.
 if at 10 milion reads depth, 75% of the reads are unique, then it passes. The higher the better 
 
 ```
-./fqComplexity -i ${name}_PE1_noadap.fastq 
+fqComplexity -i ${name}_PE1_noadap.fastq 
 ```
 
 This curve is similar, but the goal is to estimate the raw read depth needed to acieve a target concordant aligned read count
@@ -273,7 +272,7 @@ empirically noticed that copying and pasting the equation into R interprets the 
 
 Change to not have it re-do the subsampling and deduplicating
 ```
-./fqComplexity -i ${name}_PE1_noadap.fastq -x factorX -y $factorY
+fqComplexity -i ${name}_PE1_noadap.fastq -x factorX -y $factorY
 ```
 
 counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
@@ -313,7 +312,7 @@ join -1 5 -2 4 ${name}_pause.bed Homo_sapiens.GRCh38.${release}.sorted.gene.bed 
 #column ten is Pause index
 coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
 
-./pause_index.R ${name}_pause_body.bed
+pause_index.R ${name}_pause_body.bed
 ```
 
 # Estimate nascent RNA purity with exon / intron density ratio
@@ -322,7 +321,7 @@ coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.introns.bed -b 
 
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
 
-./exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
+exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 ```
 
 
