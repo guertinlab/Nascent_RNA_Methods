@@ -64,9 +64,11 @@ bowtie2-build human_rDNA.fa human_rDNA
 
 ## Reference gene annotation
 
-The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations--note that a single gene can have multiple first exons due to the presence of different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name. The output of this is piped to `awk`, which prints the indicated fields. Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" as opposed to "chrMT". Finally the output is sorted by the first, then second  column, in ascending order. The resultant BED6 files for the exons include the chromosome coordinates in columns 1-3, Ensembl transcript ID (ENST), gene name, and strand information.     
+The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations--note that a single gene can have multiple first exons due to the presence of different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name. The output of this is piped to `awk`, which prints the indicated fields. Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" as opposed to "chrMT". Finally the output is sorted by the first, then second  column, in ascending order. The resultant BED6 files for the exons include the chromosome coordinates in columns 1-3, Ensembl transcript or gene ID (ENST/ENSG), gene name, and strand information.     
 
-NOTE: the Ensembl transcript ID ENST and Ensembl Gene ID ENSG IDs are in different columns. $14 and $10 shoudl be switched in the gene annotations.
+STILL NEED TO EXPLAIN ALL THE OTHER STUFF WE DO
+
+NOTE: the Ensembl transcript ID ENST and Ensembl Gene ID ENSG IDs were in different columns. $14 and $10 were switched in the gene annotations, so subsequent code may break. I changed the join command to specify column 5, but I have not tested it yet.
 
 
 
@@ -94,44 +96,42 @@ grep 'exon_number' Homo_sapiens.GRCh38.${release}.chr.gtf | \
 #extract all complete gene annotations
 awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
-    awk '{OFS="\t";} {print $1,$4,$5,$14,$10,$7}' | \
+    awk '{OFS="\t";} {print $1,$4,$5,$10,$14,$7}' | \
     sed 's/";//g' | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.bed
-    
-sort -k4,4 Homo_sapiens.GRCh38.${release}.bed > Homo_sapiens.GRCh38.${release}.sorted.gene.bed
 
-#identify and organize all exons within genes
+#sort based on gene name
+sort -k5,5 Homo_sapiens.GRCh38.${release}.bed > Homo_sapiens.GRCh38.${release}.sorted.gene.bed
+
+#identify and sort all exons within genes
 intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed
 
-#merge intervals that overlap
+#merge exon intervals that overlap each other
 mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | 
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.merged.bed
 
-#remove all first exons (where pause is)
+#remove all first exons (so pause regino is excluded from exon / intron density ratio)
 subtractBed -s -a Homo_sapiens.GRCh38.${release}.all.exons.merged.bed -b Homo_sapiens.GRCh38.${release}.tss.bed | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.no.first.exons.bed
 
-#all introns named
+#define and name all introns 
 subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.merged.bed | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.introns.bed 
 
-#get gene names of exons
+#extract gene names of exons
 intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo_sapiens.GRCh38.${release}.bed | \
-    awk '{OFS="\t";} {print $1,$2,$3,$10,$4,$4}' | \
+    awk '{OFS="\t";} {print $1,$2,$3,$11,$4,$4}' | \
     sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed
 
-#then use coverageBed
-#load into R and use aggregate for gene name
 
 wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
 
 sort -k1,1 -k2,2n hg38.chrom.sizes | \
     sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
  
-#first this
-#window 20-120 
+#extract the pause region from the first exons, position 20 - 120 downstream of the TSS
 awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} \
     $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
@@ -326,11 +326,13 @@ I did not copy the code over here
 
 # Run on efficiency
 
+I probably need to change this because I swapped the order of the ENSG and gene in the gene annotation file above
+
 ```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
 #discard anything with chr and strand inconsistencies
-join -1 5 -2 4 ${name}_pause.bed Homo_sapiens.GRCh38.${release}.sorted.gene.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
+join -1 5 -2 5 ${name}_pause.bed Homo_sapiens.GRCh38.${release}.sorted.gene.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
 
 #column ten is Pause index
 coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
