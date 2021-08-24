@@ -100,17 +100,14 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
 ```
 
-The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the regino for 20 -120 downstream of all exon 1 annotations. The first `intersectBed` command ensures that all exons fall within annotated genes (Tommy, do you know why I do this?  I assume that I had issues that forced me down this route, but I do not recall. TO DO: try it without this step and check the final output---I cannot fathom why this is necessary!). The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. All first exon coordinates are subtracts using `subtractBed` and `intersectBed` effectively reassigns gene names to all remaining exons. The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
+The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the regino for 20 - 120 downstream of all exon 1 annotations. The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. All first exon coordinates are subtracted using `subtractBed` and `intersectBed` effectively reassigns gene names to all remaining exons (REWRITE WITHOUT PASSIVE VOICE AND NOT STARTING THE SENTENCE WITH SOFTWARE THAT STARTS WITH A LOWERCASE LETTER). The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
+
 
 
 
 ```
-#identify and sort all exons within genes
-intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | \
-    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed
-
 #merge exon intervals that overlap each other
-mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.sorted.bed | \
+mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.bed | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$2,$4}' | 
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.merged.bed
 
