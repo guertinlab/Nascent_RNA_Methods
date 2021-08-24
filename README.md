@@ -64,9 +64,9 @@ bowtie2-build human_rDNA.fa human_rDNA
 
 ## Reference gene annotation
 
-The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations--note that a single gene can have multiple first exons due to the presence of different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name. The output of this is piped to `awk`, which prints the indicated fields. Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" as opposed to "chrMT". Finally the output is sorted by the first, then second  column, in ascending order. The resultant BED6 files for the exons include the chromosome coordinates in columns 1-3, Ensembl transcript or gene ID (ENST/ENSG), gene name, and strand information.     
+The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations--note that a single gene can have multiple first exons due to the presence of different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name. The output of this is piped to `awk`, which prints the indicated fields. Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" as opposed to "chrMT". Finally the output is sorted by the first, then second  column, in ascending order. The resultant BED6 files for the exons include the chromosome coordinates in columns 1-3, Ensembl transcript or gene ID (ENST/ENSG), gene name, and strand information.       
 
-STILL NEED TO EXPLAIN ALL THE OTHER STUFF WE DO
+STILL NEED TO EXPLAIN ALL THE OTHER STUFF WE DO: I feel like breaking up the retrieve chrom sizes and sort into its own chunk and al teh bedtool operations into a separte chunk.
 
 NOTE: the Ensembl transcript ID ENST and Ensembl Gene ID ENSG IDs were in different columns. $14 and $10 were switched in the gene annotations, so subsequent code may break. I changed the join command to specify column 5, but I have not tested it yet.
 
@@ -100,6 +100,13 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/";//g' | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.bed
 
+# retrieve chromosome size information from UCSC    
+wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
+
+#sort chromosome sizes 
+sort -k1,1 -k2,2n hg38.chrom.sizes | \
+    sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
+ 
 #sort based on gene name
 sort -k5,5 Homo_sapiens.GRCh38.${release}.bed > Homo_sapiens.GRCh38.${release}.sorted.gene.bed
 
@@ -125,16 +132,13 @@ intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo
     awk '{OFS="\t";} {print $1,$2,$3,$11,$4,$4}' | \
     sort -k1,1 -k2,2n >  Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed
 
-
-wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
-
-sort -k1,1 -k2,2n hg38.chrom.sizes | \
-    sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
- 
 #extract the pause region from the first exons, position 20 - 120 downstream of the TSS
 awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} \
     $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
+    
+
+
     
 ```
 
