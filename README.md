@@ -64,7 +64,7 @@ bowtie2-build human_rDNA.fa human_rDNA
 
 ## Reference gene annotation
 
-Parse gene annotations for use in calculating pause index and exon / intron density Go here to find the latest release number http://www.ensembl.org/index.html
+The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. 
 
 
 ```
