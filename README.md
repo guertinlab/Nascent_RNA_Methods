@@ -100,7 +100,7 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
 ```
 
-The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the regino for 20 -120 downstream of all exon 1 annotations. The first `intersectBed` command ensures that all exons fall within annotated genes (Tommy, do you know why I do this?  I assume that I had issues that forced me down this route, but I do not recall. TO DO: try it without this step and check the final output). The `mergeBed` command collapses all overlapping intervals and the gene name information is lost.  
+The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the regino for 20 -120 downstream of all exon 1 annotations. The first `intersectBed` command ensures that all exons fall within annotated genes (Tommy, do you know why I do this?  I assume that I had issues that forced me down this route, but I do not recall. TO DO: try it without this step and check the final output---I cannot fathom why this is necessary!). The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. All first exon coordinates are subtracts using `subtractBed` and `intersectBed` effectively reassigns gene names to all remaining exons. The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
 
 
 
@@ -134,7 +134,8 @@ awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} \
     
 ```
 
-retrieve, sort, and harmonize chromosome size information from UCSC   
+Lastly, we retrieve, sort, and harmonize chromosome size information.
+
 
 ```
 wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.sizes
