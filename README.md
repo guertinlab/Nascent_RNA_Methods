@@ -103,6 +103,7 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
 The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the regino for 20 -120 downstream of all exon 1 annotations.   
 
 
+
 ```
 #identify and sort all exons within genes
 intersectBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.bed | \
