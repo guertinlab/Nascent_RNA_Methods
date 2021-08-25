@@ -66,10 +66,7 @@ bowtie2-build human_rDNA.fa human_rDNA
 
 The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations--note that a single gene can have multiple first exons due to the presence of different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name. The output of this is piped to `awk`, which prints the indicated fields. Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" as opposed to "chrMT". Finally the exon output is sorted by the first, then second column, in ascending order. The gene annotations are sorted by gene name. The resultant BED6 files for the exons include the chromosome coordinates in columns 1-3, Ensembl transcript or gene ID (ENST/ENSG), gene name, and strand information.       
 
-
 NOTE: the Ensembl transcript ID ENST and Ensembl Gene ID ENSG IDs were in different columns. $14 and $10 were switched in the gene annotations, so subsequent code may break. I changed the join command to specify column 5, but I have not tested it yet.
-
-
 
 ```
 
@@ -100,10 +97,7 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
 ```
 
-The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the regino for 20 - 120 downstream of all exon 1 annotations. The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. All first exon coordinates are subtracted using `subtractBed` and `intersectBed` effectively reassigns gene names to all remaining exons (REWRITE WITHOUT PASSIVE VOICE AND NOT STARTING THE SENTENCE WITH SOFTWARE THAT STARTS WITH A LOWERCASE LETTER). The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
-
-
-
+The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the region for 20 - 120 downstream of all exon 1 annotations. The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. We exclude all first exon coordinates with `subtractBed`, then `intersectBed` reassigns gene names to all remaining exons. The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
 
 ```
 #merge exon intervals that overlap each other
@@ -143,7 +137,10 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | \
     
 ```
 
-# Initialize variables
+# Processing PRO-seq data
+
+## Initialize variables
+
 ```
 #Ensembl release used above to parse gene annotations
 release=104
@@ -163,7 +160,7 @@ name=$(echo $1 | awk -F"_PE1.fastq.gz" '{print $1}')
 name=LNCaP_10uMEnza_rep3_batch2
 ```
 
-# Begin
+## Begin
 ```
 cd $directory 
 echo $name
@@ -183,7 +180,7 @@ Remove PCR duplicates from PE1
 fqdedup -i ${name}_PE1_noadap.fastq -o ${name}_PE1_dedup.fastq
 ```
 
-# DEGRADATION RNA INTEGRITY
+## DEGRADATION RNA INTEGRITY
 ```
 reads=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 fastq_pair -t $reads ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
@@ -194,7 +191,7 @@ insert_size.R ${name}.hist ${UMI_length}
 rm ${name}_PE*_noadap.fastq.paired.fq
 ```
 
-# PROCESSING FOR ALIGNMENT
+## PROCESSING FOR ALIGNMENT
 
 Trim the UMI and reverse complement
 ```
@@ -218,7 +215,7 @@ Should we change --maxins to something like 1000? Default is 500. I guess this d
 bowtie2 -p 3 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
 ```
 
-# rDNA ALIGNMENT RATE
+## rDNA ALIGNMENT RATE
 ```
 PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
@@ -243,7 +240,7 @@ concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
 overall_alignment_considered=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$concordant_pe1 '{print $1/myvar}')
 ```
 
-# FRACTION OF FILTERED READS THAT ARE MAPPABLE
+## FRACTION OF FILTERED READS THAT ARE MAPPABLE
 this is a QC metric in itself. Concordant alignment rate is typically above 90% for good libraries
 map is less stringently than concordantly mapped and most should map
 ```
@@ -252,7 +249,7 @@ pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
 alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
 ```
 
-# COMPLEXITY AND THEORETICAL READ DEPTH
+## COMPLEXITY AND THEORETICAL READ DEPTH
 
 calculate PE1 total raw reads
 ```
@@ -308,7 +305,7 @@ reads is just too high
 the post-depulication factors are all individual QC metrics, so these should be considered individually to determine whether the library is high quality.
 
 
-# Get the reads in a BED
+## Get the reads in a BED
 
 I changed the flags to hex
 ```
@@ -329,7 +326,7 @@ cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n
 I did not copy the code over here
 
 
-# Run on efficiency
+## Run on efficiency
 
 I probably need to change this because I swapped the order of the ENSG and gene in the gene annotation file above
 
@@ -345,7 +342,7 @@ coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b $
 pause_index.R ${name}_pause_body.bed
 ```
 
-# Estimate nascent RNA purity with exon / intron density ratio
+## Estimate nascent RNA purity with exon / intron density ratio
 ```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
