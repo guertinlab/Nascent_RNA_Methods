@@ -149,31 +149,29 @@ The naming convention we recommend is the following: cellType_conditions_replica
 
 We initialize six variables at the start:
 
-1) `$directory`: location of the sequencing file
-2) ydhf
+`$directory`: location of the sequencing file
+
+`$filename`: name of the gzipped FASTQ file
+
+`$release`: Ensembl gene annotation release number
+
+`UMI_length`: length of the UMI on the 5´ end of the paired end 1 read.
+
+`read_size`: read length minus UMI length.
+
+`cores`: number of cores for parallel processing
 
 ```
-#Directory where the files are
 directory=/Users/guertinlab/sequencing_run1 
-
-#file name
 filename=MCF7_20minE2_rep2_PE1.fastq.gz
-
-#Ensembl release used above to parse gene annotations
 release=104
-
-#Length of UMI on 5´ adapter
 UMI_length=8
-
-#PE1 insert size (read length minus UMI length)
 read_size=30
-
-#Number of cores to be used in cutadapt and bowtie2 for parallel processing
 cores=6
-
 ```
 
-## Begin
+## Navigate to the sequencing file folder and gunzip the file
+
 ```
 cd $directory 
 name=$(echo $filename | awk -F"_PE1.fastq.gz" '{print $1}')
