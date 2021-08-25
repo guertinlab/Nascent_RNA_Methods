@@ -10,17 +10,15 @@ Although we present novel quality control metrics and specialized software herei
 
 [Cite all the software in line]
 
-`wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
+`bedtools` :  a comprehensive suite of tools that efficiently perform a wide range of operations on genomic intervals.  https://bedtools.readthedocs.io/en/latest/
 
 `bowtie2` : aligns sequence reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
-
-`seqtk` : a multifunctional toolkit for processing sequence files. We only use two functionalities: trimming a defined number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
 
 `cutadapt` : removes a defined sequence, such as adapter sequence, from sequence reads.  https://cutadapt.readthedocs.io/en/stable/
 
 `fastq_pair` : outputs only sequence reads that have a matched paired end read and a separates unpaired reads. https://github.com/linsalrob/fastq-pair 
 
-`bedtools` :  a comprehensive suite of tools that efficiently perform a wide range of operations on genomic intervals.  https://bedtools.readthedocs.io/en/latest/
+`FLASH` : merges paired end reads by detectign overlap. https://ccb.jhu.edu/software/FLASH/ 
 
 `fqdedup` : remove duplicated sequences from FASTQ files. https://github.com/guertinlab/fqdedup
 
@@ -28,8 +26,9 @@ Although we present novel quality control metrics and specialized software herei
 
 `seqOutBias` : software designed to correct enzymatic sequence biases that also has options to output BED and bigWig files with desired features. https://github.com/guertinlab/seqOutBias
 
-`FLASH` : merges paired end reads by detectign overlap. https://ccb.jhu.edu/software/FLASH/ 
+`seqtk` : a multifunctional toolkit for processing sequence files. We only use two functionalities: trimming a defined number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
 
+`wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
 
 In addition, to facilitate data analysis and graphical output, we developed the software and R scripts. The following code uses `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
 
