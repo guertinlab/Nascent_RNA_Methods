@@ -313,7 +313,7 @@ Change to not have it re-do the subsampling and deduplicating
 I will change fqComplexity to check and see if ${nm}\_complexity.log exists when factrX adn factorY are inputs. if it exists then we can jsut skip to the awk functino that incorporates the scale factors, else we can make teh log file
 
 ```
-fqComplexity -i ${name}_PE1_noadap.fastq -x factorX -y $factorY
+fqComplexity -i ${name}_PE1_noadap.fastq -x $factorX -y $factorY
 ```
 
 counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
