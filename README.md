@@ -141,11 +141,14 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | \
 
 # Processing PRO-seq data
 
-PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts, identifying putative enhancers, detecting prominent transcription start sites, or quantifying changes in transcription. Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
+PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts (cite primaryTranscriptAnnotation), identifying putative enhancers (cite dREG), detecting prominent transcription start sites (cite something I saw come out recently but haven't tested yet), or quantifying changes in transcription (cite Fabiana and Leighton). Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
 
 ## Initialize variables
 
 The naming convention we recommend is the following: cellType_conditions_replicate_pairedend.fastq.gz. For example, a gzipped  paired end 1 (PE1) file from the second replicate of treating MCF7 cells with estrogen (E2) for 20 minutes would be: `MCF7_20minE2_rep2_PE1.fastq.gz`. Many of the lines of code assume this naming convention, especially with regards to the trailing `_PE1.fastq.gz` and `_PE2.fastq.gz`. 
+
+We initialize six variables at the start:
+1) 
 
 ```
 #Directory where the files are
