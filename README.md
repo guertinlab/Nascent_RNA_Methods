@@ -4,11 +4,11 @@ Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleot
 
 # One time software installations, downloads, and processing steps
 
-Many processes, downloads, and software installations are reused in analyses. Althouhg we refer to these as "one-time" steps, annotations are often updated and newer software versions are released.  
+Many processes, downloads, and software installations are reused in analyses. Although we refer to these as "one-time" steps, annotations are often updated and newer software versions are released.  
 
 ## Dependencies, software, and scripts
 
-Although we present novel quality control metrics and specialized software herein, most of the workflow depends upon more general software. Fortunately, this software is well-maintained and documented, so we only provide a short description and the links below. 
+We present novel quality control metrics and specialized software herein, but much of the workflow depends upon more general software. Fortunately, this software is well-maintained and documented, so we only provide a short description and the links below. 
 
 [Cite all the software in line]
 
@@ -99,7 +99,7 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
 ```
 
-The goal of the following operations is to define a set of exons that excludes all instances of first exons, define all introns, and define a set of all potential pause regions for a gene by taking the region for 20 - 120 downstream of all exon 1 annotations. The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. We exclude all first exon coordinates with `subtractBed`, then `intersectBed` reassigns gene names to all remaining exons. The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
+The goal of the following operations is to output a set of exons that excludes all instances of first exons, output all introns, and output a set of all potential pause regions for a gene by taking the region for 20 - 120 downstream of all exon 1 annotations. The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. We exclude all first exon coordinates with `subtractBed`, then `intersectBed` reassigns gene names to all remaining exons. The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
 
 ```
 #merge exon intervals that overlap each other
@@ -141,7 +141,11 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | \
 
 # Processing PRO-seq data
 
+PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts, identifying putative enhancers, detecting prominent transcription start sites, or quantifying changes in transcription. Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
+
 ## Initialize variables
+
+The naming convention we recommend is the following: cellType_conditions_replicate_pairedend.fastq.gz. For example, a gzipped  paired end 1 (PE1) file from the second replicate of treating MCF7 cells with estrogen (E2) for 20 minutes would be: `MCF7_20minE2_rep2_PE1.fastq.gz`. Many of the lines of code assume this naming convention, especially with regards to the trailing `_PE1.fastq.gz` and `_PE2.fastq.gz`. 
 
 ```
 #Ensembl release used above to parse gene annotations
@@ -150,21 +154,18 @@ release=104
 UMI_length=8
 #PE1 insert size (read length minus UMI length)
 read_size=30
-#Number of cores to be used in bowtie2 for parallel processing
+#Number of cores to be used in cutadapt and bowtie2 for parallel processing
 cores=6
 #Directory where the files are
 directory=/Users/guertinlab/Downloads/Batch1 
-
-#File prefix if you run this in a loop
-name=$(echo $1 | awk -F"_PE1.fastq.gz" '{print $1}')
-
-#File prefix for an individual sample (remove ".fastq.gz" and PE1 designation from the file name)
-name=LNCaP_10uMEnza_rep3_batch2
+#file name
+filename=LNCaP_10uMEnza_rep3_batch2_PE1.fastq.gz
 ```
 
 ## Begin
 ```
 cd $directory 
+name=$(echo $filename | awk -F"_PE1.fastq.gz" '{print $1}')
 echo $name
 gunzip ${name}_PE*.fastq.gz
 ```
