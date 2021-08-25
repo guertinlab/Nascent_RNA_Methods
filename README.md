@@ -148,18 +148,24 @@ PRO-seq data can be analyzed in many sophisticated ways, including defining prim
 The naming convention we recommend is the following: cellType_conditions_replicate_pairedend.fastq.gz. For example, a gzipped  paired end 1 (PE1) file from the second replicate of treating MCF7 cells with estrogen (E2) for 20 minutes would be: `MCF7_20minE2_rep2_PE1.fastq.gz`. Many of the lines of code assume this naming convention, especially with regards to the trailing `_PE1.fastq.gz` and `_PE2.fastq.gz`. 
 
 ```
+#Directory where the files are
+directory=/Users/guertinlab/sequencing_run1 
+
+#file name
+filename=MCF7_20minE2_rep2_PE1.fastq.gz
+
 #Ensembl release used above to parse gene annotations
 release=104
-#Length of UMI on 5' adapter
+
+#Length of UMI on 5´ adapter
 UMI_length=8
+
 #PE1 insert size (read length minus UMI length)
 read_size=30
+
 #Number of cores to be used in cutadapt and bowtie2 for parallel processing
 cores=6
-#Directory where the files are
-directory=/Users/guertinlab/Downloads/Batch1 
-#file name
-filename=LNCaP_10uMEnza_rep3_batch2_PE1.fastq.gz
+
 ```
 
 ## Begin
@@ -172,18 +178,19 @@ gunzip ${name}_PE*.fastq.gz
 
 Remove adapter sequences and inserts less than 10 bases
 
-(We can also do --cores=$cores or just not do it in parallel if it's going to cause issues)
 ```
 cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
 cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
 ```
 
 Remove PCR duplicates from PE1
+
 ```
 fqdedup -i ${name}_PE1_noadap.fastq -o ${name}_PE1_dedup.fastq
 ```
 
 ## DEGRADATION RNA INTEGRITY
+
 ```
 reads=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 fastq_pair -t $reads ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
@@ -197,15 +204,16 @@ rm ${name}_PE*_noadap.fastq.paired.fq
 ## PROCESSING FOR ALIGNMENT
 
 Trim the UMI and reverse complement
+
 ```
 seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
 seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 
 Remove reads aligning to rDNA
-(I'm switching all flags to hex for consistency)
+
 ```
-bowtie2 -p $cores -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
+bowtie2 -p $cores --maxins 1000 -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
 
 reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
 fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
@@ -213,9 +221,9 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 
 Align to hg38
 
-Should we change --maxins to something like 1000? Default is 500. I guess this doesn't matter if we're going forward with all mapped PE1 reads, but I still prefer concordantly aligned reads.
+
 ```
-bowtie2 -p cores -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
+bowtie2 -p cores --maxins 1000 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
 ```
 
 ## rDNA ALIGNMENT RATE
@@ -224,7 +232,10 @@ PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
 ```
 
-Should we echo these QC metrics and/or save them somewhere?
+Should we echo these QC metrics and/or save them somewhere? 
+
+I am in favor of saving them somewhere, then making individual barplots with the threshold line included. In lab we would run a loop, save them all to a single file per metric and plot all the samples together. If we have time I will do this. It is just a few more R scripts.
+
 
 rRNA alignment rate (does not account for low genome alignment rates, so this can be artifically low if the concordant alignment rates are low)
 If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and multiplying by the inverse of the concordant alignment rate gives a better approximation of rDNA alignment rate
@@ -299,6 +310,8 @@ rearrange the equation for them?
 empirically noticed that copying and pasting the equation into R interprets the minus signs as hyphens
 
 Change to not have it re-do the subsampling and deduplicating
+I will change fqComplexity to check and see if ${nm}\_complexity.log exists when factrX adn factorY are inputs. if it exists then we can jsut skip to the awk functino that incorporates the scale factors, else we can make teh log file
+
 ```
 fqComplexity -i ${name}_PE1_noadap.fastq -x factorX -y $factorY
 ```
