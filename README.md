@@ -148,7 +148,9 @@ PRO-seq data can be analyzed in many sophisticated ways, including defining prim
 The naming convention we recommend is the following: cellType_conditions_replicate_pairedend.fastq.gz. For example, a gzipped  paired end 1 (PE1) file from the second replicate of treating MCF7 cells with estrogen (E2) for 20 minutes would be: `MCF7_20minE2_rep2_PE1.fastq.gz`. Many of the lines of code assume this naming convention, especially with regards to the trailing `_PE1.fastq.gz` and `_PE2.fastq.gz`. 
 
 We initialize six variables at the start:
-1) 
+
+1) `$directory`: location of the sequencing file
+2) ydhf
 
 ```
 #Directory where the files are
