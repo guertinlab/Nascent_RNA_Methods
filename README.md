@@ -8,6 +8,7 @@ Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleot
 
 Although we present novel quality control metrics and specialized software herein, most of the workflow depends upon more general software. Fortunately, this software is well-maintained and documented, so we only provide a short description and the links below. 
 
+[Cite all the software in line]
 
 `wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
 
