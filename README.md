@@ -4,7 +4,7 @@ Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleot
 
 # One time software installations, downloads, and processing steps
 
-Most of the processing steps are completed on each sequencing file, but many processes, downloads, and software installations are reused. We refer to these as "one-time" steps, but annotations are often updated and newer software versions are released.  
+Many processes, downloads, and software installations are reused in analyses. Althouhg we refer to these as "one-time" steps, annotations are often updated and newer software versions are released.  
 
 ## Dependencies, software, and scripts
 
