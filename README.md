@@ -198,16 +198,16 @@ seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -L 10 -r - > 
 Remove PCR duplicates from PE1
 
 ```
-fqdedup -i ${name}_PE1_noadap_trimmed.fastq ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
+fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
 ```
 
 ## DEGRADATION RNA INTEGRITY
 
 ```
-reads=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
-fastq_pair -t $reads ${name}_PE1_noadap_trimmed.fastq ${name}_PE2_noadap.fastq
+reads=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
+fastq_pair -t $reads ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
-flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap_trimmed.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
+flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 insert_size.R ${name}.hist ${UMI_length}
 
 rm ${name}_PE*_noadap.fastq.paired.fq
@@ -281,15 +281,14 @@ calculate PE1 total raw reads
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 ```
 
-calculate PE1 reads without adapters 
+calculate PE1 reads without adapters that have inserts 10 or greater
 ```
-PE1_noadap=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
+PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
 ```
 
-This inverse of this factor is a QC metric for percent adapter/adapter ligation products (including 1 base inserts)
 
 ```
-factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap" | bc)
+factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
 
 echo fraction of reads that are not adapter/adapter ligation products
 echo $factorX | awk '{print 1/$1}'
