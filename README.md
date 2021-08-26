@@ -155,11 +155,11 @@ We initialize six variables at the start:
 
 `$release`: Ensembl gene annotation release number
 
-`UMI_length`: length of the UMI on the 5´ end of the paired end 1 read.
+`$UMI_length`: length of the UMI on the 5´ end of the paired end 1 read.
 
-`read_size`: read length minus UMI length.
+`$read_size`: read length minus UMI length.
 
-`cores`: number of cores for parallel processing
+`$cores`: number of cores for parallel processing
 
 ```
 directory=/Users/guertinlab/sequencing_run1 
