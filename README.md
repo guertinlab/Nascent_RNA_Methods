@@ -20,9 +20,9 @@ We present novel quality control metrics and specialized software herein, but mu
 
 `fastq_pair` : outputs only sequence reads that have a matched paired end read and a separates unpaired reads. https://github.com/linsalrob/fastq-pair 
 
-`FLASH` : merges paired end reads by detectign overlap. https://ccb.jhu.edu/software/FLASH/ 
+`FLASH` : merges paired end reads by detecting overlapping sequence. https://ccb.jhu.edu/software/FLASH/ 
 
-`fqdedup` : remove duplicated sequences from FASTQ files. https://github.com/guertinlab/fqdedup
+`fqdedup` : removes duplicated sequences from FASTQ files with a small memory footprint. https://github.com/guertinlab/fqdedup
 
 `samtools` : a suite of tools for parsing and interfacing with high throughput sequencing data files. http://www.htslib.org
 
@@ -170,7 +170,9 @@ read_size=30
 cores=6
 ```
 
-## Navigate to the sequencing file folder and gunzip the file
+## Preprocessing 
+
+Navigate to the folder that contains the sequencing file and gunzip the file.
 
 ```
 cd $directory 
@@ -179,7 +181,7 @@ echo $name
 gunzip ${name}_PE*.fastq.gz
 ```
 
-Remove adapter sequences and inserts less than 10 bases
+The first processing step is to remove adapter Remove adapter sequences and inserts less than 10 bases
 
 ```
 cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
