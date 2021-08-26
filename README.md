@@ -181,10 +181,11 @@ echo $name
 gunzip ${name}_PE*.fastq.gz
 ```
 
-The first processing step is to remove adapter... 
+The first processing step is to remove adapter sequence and we simultaneously discard reads that have insert sizes of one base. The 3´ adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
 
-I am in favor of modifying the workflow to remove the adapter only (plus 1 base) so that we can report adapter/adapater ligation by counting the input and output. The using seqtk as we did previosuly to remove things below 10 insert. Then feed to fqdedup.
+The fraction of reads that result from adapter/adapter ligation products can be a useful metric. This value varies widely depending upon whether a size selection was performed in the library preparation. We recently dropped the size selection step from the protocol in an effort to reduce bias against small RNA inserts (cite Sathyan). If no size selection is performed, this value can be quite high; however, a high value does not indicate poor library quality. Because sequencing is relatively cheap, we tolerate up to 80% adapter/adapter ligation products. One needs to balance to cost of performing another experiment with sequencing uninformative adapater sequences. Later on we provide a formula for determining the required sequncing depth to result in a desired number of concordant aligned reads. So why this is a useful number, if all other QC metrics point to high quality data, then we recommend further sequencing depth if less than 80% of the reads are adapter/adapter ligation products. 
 
+NOTE WE PRINT HESE TO AN OUTPUT
 
 ```
 cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
@@ -192,10 +193,10 @@ cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC
 
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 PE1_w_Adapter=$(wc -l ${name}_PE1_short.fastq | awk '{print $1/4}')
-
 AAligation=$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)
 
-echo -e "$AAligation\t$name" > ${name}_adapter_adapter_ligation.txt
+echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
+echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 
 ```
 
