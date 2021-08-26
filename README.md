@@ -181,26 +181,33 @@ echo $name
 gunzip ${name}_PE*.fastq.gz
 ```
 
-The first processing step is to remove adapter Remove adapter sequences and inserts less than 10 bases
+The first processing step is to remove adapter... 
+
+I am in favor of modifying the workflow to remove the adapter only (plus 1 base) so that we can report adapter/adapater ligation by counting the input and output. The using seqtk as we did previosuly to remove things below 10 insert. Then feed to fqdedup.
+
 
 ```
-cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
+cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
 cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
+```
+
+```
+seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE1_noadap_trimmed.fastq
 ```
 
 Remove PCR duplicates from PE1
 
 ```
-fqdedup -i ${name}_PE1_noadap.fastq -o ${name}_PE1_dedup.fastq
+fqdedup -i ${name}_PE1_noadap_trimmed.fastq ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
 ```
 
 ## DEGRADATION RNA INTEGRITY
 
 ```
-reads=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
-fastq_pair -t $reads ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
+reads=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
+fastq_pair -t $reads ${name}_PE1_noadap_trimmed.fastq ${name}_PE2_noadap.fastq
 
-flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
+flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap_trimmed.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 insert_size.R ${name}.hist ${UMI_length}
 
 rm ${name}_PE*_noadap.fastq.paired.fq
@@ -211,7 +218,6 @@ rm ${name}_PE*_noadap.fastq.paired.fq
 Trim the UMI and reverse complement
 
 ```
-seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
 seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 
@@ -277,7 +283,7 @@ PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 
 calculate PE1 reads without adapters 
 ```
-PE1_noadap=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
+PE1_noadap=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
 ```
 
 This inverse of this factor is a QC metric for percent adapter/adapter ligation products (including 1 base inserts)
@@ -304,7 +310,7 @@ this curve lets you know the quality of the library in terms of it's complexity.
 if at 10 milion reads depth, 75% of the reads are unique, then it passes. The higher the better 
 
 ```
-fqComplexity -i ${name}_PE1_noadap.fastq 
+fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
 
 This curve is similar, but the goal is to estimate the raw read depth needed to acieve a target concordant aligned read count
@@ -318,7 +324,7 @@ Change to not have it re-do the subsampling and deduplicating
 I will change fqComplexity to check and see if ${nm}\_complexity.log exists when factrX adn factorY are inputs. if it exists then we can jsut skip to the awk functino that incorporates the scale factors, else we can make teh log file
 
 ```
-fqComplexity -i ${name}_PE1_noadap.fastq -x $factorX -y $factorY
+fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
 ```
 
 counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
