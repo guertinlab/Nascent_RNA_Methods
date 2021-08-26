@@ -310,7 +310,7 @@ PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}'
 ```
 factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
 
-echo fraction of reads that are not adapter/adapter ligation products
+echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
 echo $factorX | awk '{print 1/$1}'
 ```
 
