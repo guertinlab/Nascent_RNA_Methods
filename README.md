@@ -203,8 +203,12 @@ echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 
 
 
+
 ```
-seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE1_noadap_trimmed.fastq
+
+seqtk seq -L 10 -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
+
+
 ```
 
 Remove PCR duplicates from PE1
@@ -216,6 +220,7 @@ fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
 ## DEGRADATION RNA INTEGRITY
 
 ```
+
 PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
@@ -229,7 +234,10 @@ rm ${name}_PE*_noadap.fastq.paired.fq
 
 Trim the UMI and reverse complement
 
+i already RCed it 
+
 ```
+seqtk trimfq -e ${UMI_length} ${name}_PE1_noadap_trimmed.fastq  > ${name}_PE1_processed.fastq
 seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 
