@@ -189,7 +189,17 @@ I am in favor of modifying the workflow to remove the adapter only (plus 1 base)
 ```
 cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
 cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
+
+PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
+PE1_w_Adapter=$(wc -l ${name}_PE1_short.fastq | awk '{print $1/4}')
+
+AAligation=$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)
+
+echo -e "$AAligation\t$name" > ${name}_adapter_adapter_ligation.txt
+
 ```
+
+
 
 ```
 seqtk trimfq -b ${UMI_length} ${name}_PE1_noadap.fastq | seqtk seq -L 10 -r - > ${name}_PE1_noadap_trimmed.fastq
@@ -204,8 +214,8 @@ fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
 ## DEGRADATION RNA INTEGRITY
 
 ```
-reads=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
-fastq_pair -t $reads ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
+PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
+fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 insert_size.R ${name}.hist ${UMI_length}
