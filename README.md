@@ -301,25 +301,20 @@ echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
 
 ## Complexity and theoretical read depth
 
-this is useful as a metric to know whether you want to sequence more, usually over 10 milion reads is sufficient if you have 3+ replicates. 
+We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates. 
 
-calculate PE1 total raw reads
+calculate PE1 total raw reads and propressed PE1 reads without adapters that have inserts 10 or greater
 ```
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
-```
-
-calculate PE1 reads without adapters that have inserts 10 or greater
-```
 PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
-```
 
-
-```
 factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
 
 echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
 echo $factorX | awk '{print 1/$1}'
+
 ```
+
 
 calculate PE1 deduplicated reads
 ```
@@ -340,8 +335,7 @@ fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
 
 This curve is similar, but the goal is to estimate the raw read depth needed to acieve a target concordant aligned read count
-the two factors needed are the fraction of the total reads that are adapter/adapter ligation products (this is the only step that preceeds deduplication)
- and the fraction of deduplicated reads that align concordantly after filtering rDNA-aligned reads, short reads, and unaligned reads
+the two factors needed are the fraction of the total reads that are adapter/adapter ligation products or fewer than 10 bases and the fraction of deduplicated reads that align concordantly after filtering rDNA-aligned reads, short reads, and unaligned reads
  simply solve for read_depth after providing a desired Concordant Aligned
 rearrange the equation for them?
 empirically noticed that copying and pasting the equation into R interprets the minus signs as hyphens
