@@ -21,6 +21,8 @@ all.data$intron.density = all.data$intron.signal/all.data$intron.length
 
 all.data$ratio = all.data$exon.density / all.data$intron.density
 
+system(paste0('echo "',round(median(all.data$ratio, na.rm = TRUE), 2),'\t',prefix.name,'\t2.0\tExon/Intron Ratio" >> ',prefix.name,'_QC_metrics.txt'))
+
 pdf(paste(prefix.name,'_exon_intron_ratio.pdf', sep=''), width=2.5, height=4, useDingbats=FALSE)
 par(pty="s")
 boxplot(log(all.data$ratio, base = 10), main = paste('median = ', round(median(all.data$ratio, na.rm = TRUE), 2)),
