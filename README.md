@@ -216,7 +216,7 @@ fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
 ## DEGRADATION RNA INTEGRITY
 
-We measure RNA degradation by quantifying the ...
+We measure RNA degradation by searching for overlap between paired end reads with `flash` and the resultant histogram output. An _ad hoc_ 
 
 
 
