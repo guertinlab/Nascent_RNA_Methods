@@ -216,7 +216,7 @@ fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
 ## DEGRADATION RNA INTEGRITY
 
-We measure RNA degradation by searching for overlap between paired end reads with `flash` and the resultant histogram output. An _ad hoc_ 
+We measure RNA degradation by searching for overlap between paired end reads with `flash` and the resultant histogram output. We empirically found that there are fewer reads withint eh range of 10 - 20 than the range of 30 - 40 for high quality libraries. RNA only starts to protrude from the RNA Polymerase II exit channel at about 20 bases, so 20 base of RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on have species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library.  
 
 
 
