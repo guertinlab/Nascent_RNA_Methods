@@ -6,7 +6,7 @@ argsLen <- length(Args)
 densities = read.table(Args[1], header =FALSE)
 prefix.name = strsplit(Args[1], "_pause_body.bed")[[1]][1]
 median(densities[,10] )
-
+system(paste0('echo "',median(densities[,10]),'\t',prefix.name,'\t10\tPause Index" >> ',prefix.name,'_QC_metrics.txt'))
 pdf(paste(prefix.name,'_pause_index.pdf', sep=''), width=2.5, height=4, useDingbats=FALSE)
 par(pty="s")
 boxplot(log(densities[,10], base = 10), main = paste('median = ', round(median(densities[,10] ), 2)),
