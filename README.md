@@ -274,7 +274,6 @@ not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA
 --->
 In order to rDNA alignment rate, we first counts the number of reads prior to rDNA alignment and after removing rDNA aligned reads. By subtracting the post-alignment read count from the input, we calculate the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordantly aligned paired end 1 reads. Finally we calcualte the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
 
-extract concordant aligned reads from BAM
 ```
 PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
@@ -303,6 +302,8 @@ echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
 ## Complexity and theoretical read depth
 
 We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates. 
+
+
 
 calculate PE1 total raw reads and propressed PE1 reads without adapters that have inserts 10 or greater
 ```
