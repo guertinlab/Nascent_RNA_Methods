@@ -229,16 +229,16 @@ rm ${name}_PE*_noadap.fastq.paired.fq
 
 ## PROCESSING FOR ALIGNMENT
 
-Trim the UMI and reverse complement
-
-i already RCed it 
+The final processing step removes the UMI from both paired end reads and reverse complements the paired end 2 read.
 
 ```
 seqtk trimfq -e ${UMI_length} ${name}_PE1_noadap_trimmed.fastq  > ${name}_PE1_processed.fastq
 seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 
-Remove reads aligning to rDNA
+## Remove reads aligning to rDNA
+
+By first aligning to the rDNA we can estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Therefore, we recommend less than 20% of reads align to rDNA to pass quality control. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map reasonably well to non-rDNA regions in the genome result in huge spikes in the data if rDNA-aligned reads are not first removed.   
 
 ```
 bowtie2 -p $cores --maxins 1000 -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
