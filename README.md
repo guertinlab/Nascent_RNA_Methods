@@ -360,7 +360,7 @@ cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n
 
 ## Run on efficiency
 
-I probably need to change this because I swapped the order of the ENSG and gene in the gene annotation file above
+RNA polymerases that are associated with gene bodies efficiently incorporate numcleotides during the run on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run on efficiently (cite Leighton cells reports and ROugvie 1988). Therefore, the pause index is used to quantify run on efficiency. Pause index is the density of signal in the promoter-proximal pause region divided by density in the gene body. Hoever, since pause windows are variable, pause indices can differ substantially depending upon what one considers the pause window. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be deflated. Here, we define the pause window for a gene as position 20 -120 downstream of the most prominent TSS. The most prominent TSS is determined by calcualating the density in this 20 - 120 window for all annotated TSSs and choosing the TSS upstream of the most RNA-polymerase dense region.   
 
 ```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
