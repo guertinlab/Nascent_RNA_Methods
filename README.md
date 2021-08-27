@@ -303,9 +303,16 @@ echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
 
 We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates. 
 
+For the first metrics, the input FASTQ file is preprocessed and the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot. We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
 
+```
+fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
+```
+
+We need two factors to derive the constants to calcualte theoretical read depth for a specified concordant aligned read depth.
 
 calculate PE1 total raw reads and propressed PE1 reads without adapters that have inserts 10 or greater
+
 ```
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
@@ -315,26 +322,14 @@ factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
 echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
 echo $factorX | awk '{print 1/$1}'
 
-```
 
-
-calculate PE1 deduplicated reads
-```
+#calculate PE1 deduplicated reads
 PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
-```
 
-divide
-```
+#divide
 factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
 ```
 
-two different curves:
-this curve lets you know the quality of the library in terms of it's complexity.
-if at 10 milion reads depth, 75% of the reads are unique, then it passes. The higher the better 
-
-```
-fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
-```
 
 This curve is similar, but the goal is to estimate the raw read depth needed to acieve a target concordant aligned read count
 the two factors needed are the fraction of the total reads that are adapter/adapter ligation products or fewer than 10 bases and the fraction of deduplicated reads that align concordantly after filtering rDNA-aligned reads, short reads, and unaligned reads
