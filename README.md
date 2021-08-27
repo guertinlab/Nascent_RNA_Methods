@@ -303,15 +303,13 @@ echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
 
 We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates. 
 
-For the first metrics, the input FASTQ file is preprocessed and the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot. We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
+For the first metrics, the input FASTQ file is preprocessed and the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged in `${name}_complexity.log`. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot. We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
 
 ```
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
 
-We need two factors to derive the constants to calcualte theoretical read depth for a specified concordant aligned read depth.
-
-calculate PE1 total raw reads and propressed PE1 reads without adapters that have inserts 10 or greater
+We need two factors to derive the constants to calculate the theoretical read depth for a specified concordant aligned read depth. First, we divide the PE1 total raw reads by processed PE1 reads that have adapter contamination and that have inserts less than 10 bases removed. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome.  
 
 ```
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
@@ -322,7 +320,6 @@ factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
 echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
 echo $factorX | awk '{print 1/$1}'
 
-
 #calculate PE1 deduplicated reads
 PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
 
@@ -330,28 +327,22 @@ PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
 factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
 ```
 
-
-This curve is similar, but the goal is to estimate the raw read depth needed to acieve a target concordant aligned read count
-the two factors needed are the fraction of the total reads that are adapter/adapter ligation products or fewer than 10 bases and the fraction of deduplicated reads that align concordantly after filtering rDNA-aligned reads, short reads, and unaligned reads
- simply solve for read_depth after providing a desired Concordant Aligned
-rearrange the equation for them?
-empirically noticed that copying and pasting the equation into R interprets the minus signs as hyphens
-
-Change to not have it re-do the subsampling and deduplicating
-I will change fqComplexity to check and see if ${nm}\_complexity.log exists when factrX adn factorY are inputs. if it exists then we can jsut skip to the awk functino that incorporates the scale factors, else we can make teh log file
+Invoke `fqComplexity` with the `-x` and `-y` options specified to fit an asymptotic regression model to the factor-scaled log file.
 
 ```
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
 ```
 
-counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
-reads is just too high
-the post-depulication factors are all individual QC metrics, so these should be considered individually to determine whether the library is high quality.
+Counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
+reads is too damn high. The QC metrics should be considered to determine whether the library is high quality, but if the library is deemed high quality but you have low sequencing depth use this equation.  
 
 
 ## Get the reads in a BED
+First we extract all the paired end 1 reads and separate reads based on their alignment to the plus or minus strand.
 
-I changed the flags to hex
+The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias herein, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software outputs a bigWig and BED file, but it also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigned the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
+
+The `awk` command turns the respective stranded files into BED6 files with strand information in column 6, then the files are concatenated and sorted.
 ```
 samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
 samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
@@ -365,9 +356,6 @@ awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"-"}' ${name}_PE1_minus.bed > ${name}_PE1
 
 cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
 ```
-
-
-I did not copy the code over here
 
 
 ## Run on efficiency
