@@ -238,7 +238,7 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 
 ## Remove reads aligning to rDNA
 
-By first aligning to the rDNA we can estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Therefore, we recommend less than 20% of reads align to rDNA to pass quality control. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed.   
+By first aligning to the rDNA we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed.   
 
 ```
 bowtie2 -p $cores --maxins 1000 -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
@@ -269,25 +269,38 @@ If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and mul
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
 --->
+The outputs of the In order to calculate rDNA alignment rate, we first ne recommend less than 20% of reads align to rDNA to pass quality control.
 alternatively, of the aligned reads, what fraction is rDNA:
 this is what PEPPRO should do
 
 extract concordant aligned reads from BAM
 ```
+PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
+PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
+total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
+
 concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-rDNA_alignment=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v conpe1=$concordant_pe1 '{print $1/conpe1}')
+total_concordant=$(echo "$(($concordant_pe1+$total_rDNA))")
+
+rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_concordant" | bc)
+
+echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
+
 ```
 
-## FRACTION OF FILTERED READS THAT ARE MAPPABLE
-this is a QC metric in itself. Concordant alignment rate is typically above 90% for good libraries
-map is less stringently than concordantly mapped and most should map
+## Mappability rate
+After all the processing, the vast majority of reads should map concordantly to the genome. Concordant alignment rate for successful PRO-seq experiments is typically above 90%.
+
 ```
 map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
 pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
 alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
+
+echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
 ```
 
-## COMPLEXITY AND THEORETICAL READ DEPTH
+## Complexity and theoretical read depth
+
 this is useful as a metric to know whether you want to sequence more, usually over 10 milion reads is sufficient if you have 3+ replicates. 
 
 calculate PE1 total raw reads
