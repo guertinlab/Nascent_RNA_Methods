@@ -258,10 +258,10 @@ bowtie2 -p cores --maxins 1000 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq 
 ## rDNA alignment rate
 
 
-%% ```
+<!--- ```
 %% PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 %% PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
-%% ```
+%% ```--->
 
 
 rRNA alignment rate (does not account for low genome alignment rates, so this can be artifically low if the concordant alignment rates are low)
