@@ -18,6 +18,9 @@ ratio.degraded.intact = degraded/intact
   
 
 ratio.degraded.intact.2 = round(as.numeric(ratio.degraded.intact), 2)
+
+system(paate0('echo -e "',ratio.degraded.intact.2,'\t',prefix.name,'\t1.0\tDegradation Ratio" >> prefix.name_QC_metrics.txt'))
+
 pdf(paste(prefix.name, '_sizes', '.pdf', sep=''), width=5, height=5, useDingbats=FALSE)
 par(pty="s")
 plot(frequency~size, hist, 
