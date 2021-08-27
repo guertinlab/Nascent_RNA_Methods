@@ -178,6 +178,8 @@ echo $name
 gunzip ${name}_PE*.fastq.gz
 ```
 
+## Processing reads 
+
 The first processing step is to remove adapter sequence and we simultaneously discard reads that have insert sizes of one base. The 3´ adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
 
 The fraction of reads that result from adapter/adapter ligation products can be a useful metric. This value varies widely depending upon whether a size selection was performed in the library preparation. We recently dropped the size selection step from the protocol in an effort to reduce bias against small RNA inserts (cite Sathyan). If no size selection is performed, this value can be quite high; however, a high value does not indicate poor library quality. Because sequencing is relatively cheap, we tolerate up to 80% adapter/adapter ligation products. One needs to balance to cost of performing another experiment with sequencing uninformative adapter sequences. Later on we provide a formula for determining the required sequncing depth to result in a desired number of concordant aligned reads. So why this is a useful number, if all other QC metrics point to high quality data, then we recommend further sequencing depth if less than 80% of the reads are adapter/adapter ligation products. 
@@ -214,11 +216,9 @@ PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 ```
 
-## DEGRADATION RNA INTEGRITY
+## RNA integrity score
 
 We measure RNA degradation by searching for overlap between paired end reads with `flash` and the resultant histogram output. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries. RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 base of RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library.  
-
-
 
 ```
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
@@ -227,7 +227,7 @@ insert_size.R ${name}.hist ${UMI_length}
 rm ${name}_PE*_noadap.fastq.paired.fq
 ```
 
-## PROCESSING FOR ALIGNMENT
+## Processing for alignment
 
 The final processing step removes the UMI from both paired end reads and reverse complements the paired end 2 read.
 
@@ -248,21 +248,20 @@ reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
 fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 ```
 
-The last processing step for individual libraries is to align to genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented in the opposite orientation to what is typical for RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sort the reads. 
+## Genome alignment
+The last processing step for individual libraries is to align to genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sort the reads. 
 
 ```
 bowtie2 -p cores --maxins 1000 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
 ```
 
-## rDNA ALIGNMENT RATE
-```
-PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
-PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
-```
+## rDNA alignment rate
 
-Should we echo these QC metrics and/or save them somewhere? 
 
-I am in favor of saving them somewhere, then making individual barplots with the threshold line included. In lab we would run a loop, save them all to a single file per metric and plot all the samples together. If we have time I will do this. It is just a few more R scripts.
+%% ```
+%% PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
+%% PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
+%% ```
 
 
 rRNA alignment rate (does not account for low genome alignment rates, so this can be artifically low if the concordant alignment rates are low)
@@ -275,7 +274,7 @@ alternatively, of the aligned reads, what fraction is rDNA:
 this is what PEPPRO should do
 
 extract concordant aligned reads from BAM
-this is useful as a metric to know whether you want to sequence more, usually over 10 milion reads is good if you have 3+ replicates. 
+this is useful as a metric to know whether you want to sequence more, usually over 10 milion reads is sufficient if you have 3+ replicates. 
 ```
 concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
 
