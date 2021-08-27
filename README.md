@@ -182,7 +182,9 @@ gunzip ${name}_PE*.fastq.gz
 
 The first processing step is to remove adapter sequence and we simultaneously discard reads that have insert sizes of one base. The 3´ adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
 
-The fraction of reads that result from adapter/adapter ligation products can be a useful metric. This value varies widely depending upon whether a size selection was performed in the library preparation. We recently dropped the size selection step from the protocol in an effort to reduce bias against small RNA inserts (cite Sathyan). If no size selection is performed, this value can be quite high; however, a high value does not indicate poor library quality. Because sequencing is relatively cheap, we tolerate up to 80% adapter/adapter ligation products. One needs to balance to cost of performing another experiment with sequencing uninformative adapter sequences. Later on we provide a formula for determining the required sequncing depth to result in a desired number of concordant aligned reads. So why this is a useful number, if all other QC metrics point to high quality data, then we recommend further sequencing depth if less than 80% of the reads are adapter/adapter ligation products. 
+The fraction of reads that result from adapter/adapter ligation products can be a useful metric. We calculate this value by first counting the number of lines in the original FASTQ file using `wc -l` and divide that value by 4 using `awk '{print $1/4}'` because FASTQ files contain four lines per sequence entry. This same operation is performed on the output file of reads that were too short, in this case 0 or 1 base insert. Divide the adapter/adapter ligation product value by the total and round to the hundredth with `$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)`.
+
+This value varies widely depending upon whether a size selection was performed in the library preparation. We recently dropped the size selection step from the protocol in an effort to reduce bias against small RNA inserts (cite Sathyan). If no size selection is performed, this value can be quite high; however, a high value does not indicate poor library quality. Because sequencing is relatively cheap, we tolerate up to 80% adapter/adapter ligation products. One needs to balance to cost of performing another experiment with sequencing uninformative adapter sequences. Later on we provide a formula for determining the required sequncing depth to result in a desired number of concordant aligned reads. So why this is a useful number, if all other QC metrics point to high quality data, then we recommend further sequencing depth if less than 80% of the reads are adapter/adapter ligation products. 
 
 Each quality control metric can be distilled down to a single number that is printed to the file `${name}_QC_metrics.txt`. Alongside the value, we include the recommended threshold. We will continue to print all metrics to this file and plot (I NEED TO DO THIS< BUT FIRST I WANT TO PRINT THEM ALL) the data at the end of the workflow. I WILL REVISIT THE FEASIBILITY OF MAKING ALL THE QC METRICS EXCEED THE THRESHOLD AS OPPOSED TO SOME FALLING BELOW, BUT MAYBE WHEN WE PLOT IT WE CAN JUST MAKE THE THREHOLD HORZONTAL DOTTED LINE DIFFERNT COLORS FOR GREATER THAN OR LESS. 
 
@@ -238,7 +240,8 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 
 ## Remove reads aligning to rDNA
 
-By first aligning to the rDNA we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed.   
+By first aligning to the rDNA we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed. The `   
+By first aligning to the rDNA we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed. The `-f 0x4` flag of the `samtools fastq` command specifies that only unmapped reads should be included in the FASTQ output.    
 
 ```
 bowtie2 -p $cores --maxins 1000 -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
@@ -269,9 +272,7 @@ If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and mul
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
 --->
-The outputs of the In order to calculate rDNA alignment rate, we first ne recommend less than 20% of reads align to rDNA to pass quality control.
-alternatively, of the aligned reads, what fraction is rDNA:
-this is what PEPPRO should do
+In order to rDNA alignment rate, we first counts the number of reads prior to rDNA alignment and after removing rDNA aligned reads. By subtracting the post-alignment read count from the input, we calculate the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordantly aligned paired end 1 reads. Finally we calcualte the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
 
 extract concordant aligned reads from BAM
 ```
@@ -289,7 +290,7 @@ echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metric
 ```
 
 ## Mappability rate
-After all the processing, the vast majority of reads should map concordantly to the genome. Concordant alignment rate for successful PRO-seq experiments is typically above 90%.
+After all the processing, the vast majority of reads should map concordantly to the genome. Concordant alignment rate for successful PRO-seq experiments is typically above 90%. Again, we count specific reads using `samtools` and by counts reads in FASTQ files, then calcuate alignment rate. We recommend the followign site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
 
 ```
 map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
