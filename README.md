@@ -71,7 +71,6 @@ The quality control metrics outlined herein require the counting of sequence rea
 NOTE: the Ensembl transcript ID ENST and Ensembl Gene ID ENSG IDs were in different columns. $14 and $10 were switched in the gene annotations, so subsequent code may break. I changed the join command to specify column 5, but I have not tested it yet.
 
 ```
-
 release=104
 
 wget http://ftp.ensembl.org/pub/release-${release}/gtf/homo_sapiens/Homo_sapiens.GRCh38.${release}.chr.gtf.gz
@@ -123,8 +122,7 @@ intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo
 #extract the pause region from the first exons, position 20 - 120 downstream of the TSS
 awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} \
     $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | \
-    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed
-    
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed 
 ```
 
 Lastly, we retrieve, sort, and harmonize chromosome size information.
@@ -136,7 +134,6 @@ wget https://hgdownload-test.gi.ucsc.edu/goldenPath/hg38/bigZips/hg38.chrom.size
 #sort chromosome sizes and harmonize chrM name
 sort -k1,1 -k2,2n hg38.chrom.sizes | \
     sed 's/chrMT/chrM/g' > hg38.chrom.order.txt
-    
 ```
 
 # Processing PRO-seq data
@@ -198,32 +195,32 @@ AAligation=$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)
 
 echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
 echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
-
 ```
 
-
-
-
-```
-
-seqtk seq -L 10 -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
-
+The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand.
 
 ```
+seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
+```
 
-Remove PCR duplicates from PE1
+PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused and the 5´end of the RNA is often the transcription start site. One cannot filter potential PCR duplicate reads based on whether two independent reads are identical as determined by having identical paired end reads alignments. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. By pairing the PE1 and PE2 reads, we effectively deduplicate the PE2 based on the presence of the PE1 UMI. 
 
 ```
 fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
+
+#this variable is a near-optimal optimal table size value for fastq_pair: 
+PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
+
+fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 ```
 
 ## DEGRADATION RNA INTEGRITY
 
+We measure RNA degradation by quantifying the ...
+
+
+
 ```
-
-PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
-fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
-
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 insert_size.R ${name}.hist ${UMI_length}
 
