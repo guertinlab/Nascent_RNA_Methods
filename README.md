@@ -256,29 +256,26 @@ bowtie2 -p cores --maxins 1000 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq 
 ```
 
 ## rDNA alignment rate
-
-
 <!--- ```
 %% PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 %% PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
-%% ```--->
+%% ```
 
 
 rRNA alignment rate (does not account for low genome alignment rates, so this can be artifically low if the concordant alignment rates are low)
 If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and multiplying by the inverse of the concordant alignment rate gives a better approximation of rDNA alignment rate
+
 ```
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
-
+--->
 alternatively, of the aligned reads, what fraction is rDNA:
 this is what PEPPRO should do
 
 extract concordant aligned reads from BAM
-this is useful as a metric to know whether you want to sequence more, usually over 10 milion reads is sufficient if you have 3+ replicates. 
 ```
 concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-
-overall_alignment_considered=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$concordant_pe1 '{print $1/myvar}')
+rDNA_alignment=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v conpe1=$concordant_pe1 '{print $1/conpe1}')
 ```
 
 ## FRACTION OF FILTERED READS THAT ARE MAPPABLE
@@ -291,6 +288,7 @@ alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
 ```
 
 ## COMPLEXITY AND THEORETICAL READ DEPTH
+this is useful as a metric to know whether you want to sequence more, usually over 10 milion reads is sufficient if you have 3+ replicates. 
 
 calculate PE1 total raw reads
 ```
