@@ -376,7 +376,7 @@ pause_index.R ${name}_pause_body.bed
 
 ## Estimate nascent RNA purity with exon / intron density ratio
 
-RNA-seq primarily measures mature transcripts, so exons density far exceeds intron density. However, these densities are comparable within gene bodies (i.e. the first exon where pausing occurs is excluded). Calculating the exon density to intron density ratio complements rDNA alignment rate as a metric to quantify nascent RNA purity. 
+RNA-seq primarily measures mature transcripts, so exons density far exceeds intron density. However, these densities are comparable within gene bodies (i.e. the first exon where pausing occurs is excluded) for nascent RNA-seq. Calculating the exon density to intron density ratio complements rDNA alignment rate as a metric to quantify nascent RNA purity. 
 
 ```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
