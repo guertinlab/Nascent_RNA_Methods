@@ -308,7 +308,7 @@ For the first metrics, the input FASTQ file is preprocessed and the UMI is still
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
 
-We need two factors to derive the constants to calculate the theoretical read depth for a specified concordant aligned read depth. First, we divide the PE1 total raw reads by processed PE1 reads that have adapter contamination and that have inserts less than 10 bases removed. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome.  
+We need two factors to derive the constants to calculate the theoretical read depth for a specified concordantly aligned read depth. First, we divide the PE1 total raw reads by processed PE1 reads that have adapter contamination and that have inserts less than 10 bases removed. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome.  
 
 ```
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
