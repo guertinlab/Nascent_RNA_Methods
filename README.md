@@ -251,7 +251,7 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 ```
 
 ## Genome alignment
-The last processing step for individual libraries is to align to genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sort the reads. 
+The last processing step for individual libraries is to align to the genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sort the reads. 
 
 ```
 bowtie2 -p $cores --maxins 1000 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
@@ -271,7 +271,7 @@ If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and mul
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
 --->
-In order to rDNA alignment rate, we first counts the number of reads prior to rDNA alignment and after removing rDNA aligned reads. By subtracting the post-alignment read count from the input, we calculate the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordantly aligned paired end 1 reads. Finally we calcualte the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
+In order to calculate the rDNA alignment rate, we first counts the number of reads prior to rDNA alignment and after removing rDNA aligned reads. By subtracting the post-alignment read count from the input, we calculate the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordantly aligned paired end 1 reads. Finally we calcualte the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
 
 ```
 PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
