@@ -288,7 +288,7 @@ echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metric
 ```
 
 ## Mappability rate
-After all the processing, the vast majority of reads should map concordantly to the genome. Concordant alignment rate for successful PRO-seq experiments is typically above 90%. Again, we count specific reads using `samtools` and by counts reads in FASTQ files, then calcuate alignment rate. We recommend the followign site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
+After all the processing, the vast majority of reads should map concordantly to the genome. Alignment rates for successful PRO-seq experiments are typically above 90%. Again, we count specific reads using `samtools` and by counts reads in FASTQ files, then calcuate alignment rate. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
 
 ```
 map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
