@@ -234,7 +234,7 @@ rm ${name}_PE*_noadap.fastq.paired.fq
 The final processing step removes the UMI from both paired end reads and reverse complements the paired end 2 read.
 
 ```
-seqtk trimfq -e ${UMI_length} ${name}_PE1_noadap_trimmed.fastq  > ${name}_PE1_processed.fastq
+seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq > ${name}_PE1_processed.fastq
 seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 
