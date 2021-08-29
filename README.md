@@ -169,7 +169,7 @@ cores=6
 
 ## Preprocessing 
 
-Navigate to the folder that contains the sequencing file and gunzip the file.
+Navigate to the folder that contains the sequencing file and gunzip the files.
 
 ```
 cd $directory 
@@ -212,7 +212,7 @@ PRO-seq can have several independent reads that have the same genomic ends becau
 ```
 fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
 
-#this variable is a near-optimal optimal table size value for fastq_pair: 
+#this variable is a near-optimal table size value for fastq_pair: 
 PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 
 fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
