@@ -68,8 +68,6 @@ bowtie2-build human_rDNA.fa human_rDNA
 
 The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl (cite). The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations--note that a single gene can have multiple first exons due to the presence of different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name. The output of this is piped to `awk`, which prints the indicated fields. Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" as opposed to "chrMT". Finally the exon output is sorted by the first, then second column, in ascending order. The gene annotations are sorted by gene name. The resultant BED6 files for the exons include the chromosome coordinates in columns 1-3, Ensembl transcript or gene ID (ENST/ENSG), gene name, and strand information.       
 
-NOTE: the Ensembl transcript ID ENST and Ensembl Gene ID ENSG IDs were in different columns. $14 and $10 were switched in the gene annotations, so subsequent code may break. I changed the join command to specify column 5, but I have not tested it yet.
-
 ```
 release=104
 
@@ -138,7 +136,7 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | \
 
 # Processing PRO-seq data
 
-PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts (cite primaryTranscriptAnnotation), identifying putative enhancers (cite dREG), detecting prominent transcription start sites (cite something I saw come out recently but haven't tested yet), or quantifying changes in transcription (cite Fabiana and Leighton). Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
+PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts (cite primaryTranscriptAnnotation), identifying putative enhancers (cite dREG), detecting prominent transcription start sites (cite something I saw come out recently but haven't tested yet), or quantifying changes in RNA Polymerase density in different genic features (cite Fabiana and Leighton). Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
 
 ## Initialize variables
 
@@ -180,14 +178,13 @@ gunzip ${name}_PE*.fastq.gz
 
 ## Processing reads 
 
-The first processing step is to remove adapter sequence and we simultaneously discard reads that have insert sizes of one base. The 3´ adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
+The first processing step is to remove adapter sequence and simultaneously discard reads that have insert sizes of one base. The 3´ adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
 
-The fraction of reads that result from adapter/adapter ligation products can be a useful metric. We calculate this value by first counting the number of lines in the original FASTQ file using `wc -l` and divide that value by 4 using `awk '{print $1/4}'` because FASTQ files contain four lines per sequence entry. This same operation is performed on the output file of reads that were too short, in this case 0 or 1 base insert. Divide the adapter/adapter ligation product value by the total and round to the hundredth with `$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)`.
+The fraction of reads that result from adapter/adapter ligation products is a useful metric to help determine the necessary read depth to achieve a certain aligned read depth. FASTQ files contain four lines per sequence entry, so we calculate this value by first counting the number of lines in the original FASTQ file using `wc -l` and divide that value by 4 using `awk '{print $1/4}'`. We perform the same operation on the output file of reads that were too short, in this case 0 or 1 base insertions. Finally we, divide the adapter/adapter ligation product value by the total and round to the hundredth with `$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)`.
 
 This value varies widely depending upon whether a size selection was performed in the library preparation. We recently dropped the size selection step from the protocol in an effort to reduce bias against small RNA inserts (cite Sathyan). If no size selection is performed, this value can be quite high; however, a high value does not indicate poor library quality. Because sequencing is relatively cheap, we tolerate up to 80% adapter/adapter ligation products. One needs to balance to cost of performing another experiment with sequencing uninformative adapter sequences. Later on we provide a formula for determining the required sequncing depth to result in a desired number of concordant aligned reads. So why this is a useful number, if all other QC metrics point to high quality data, then we recommend further sequencing depth if less than 80% of the reads are adapter/adapter ligation products. 
 
-Each quality control metric can be distilled down to a single number that is printed to the file `${name}_QC_metrics.txt`. Alongside the value, we include the recommended threshold. We will continue to print all metrics to this file and plot the data at the end of the workflow.
-
+Each quality control metric is distilled down to a single number that is printed to the file `${name}_QC_metrics.txt`. Alongside the value, we include the recommended threshold. We continue to print all metrics to this file and plot the data at the end of the workflow.
 
 ```
 cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
@@ -201,13 +198,13 @@ echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
 echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 ```
 
-The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand.
+The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand. This is necessary because the paired end 1 read rom PRO-seq data sequences the 3´ end of the original nascent RNA. 
 
 ```
 seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
 ```
 
-PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused and the 5´end of the RNA is often the transcription start site. One cannot filter potential PCR duplicate reads based on whether two independent reads are identical as determined by having identical paired end reads alignments. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. By pairing the PE1 and PE2 reads, we effectively deduplicate the PE2 based on the presence of the PE1 UMI. 
+PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused (cite Kwak) and the 5´end of the RNA is often the transcription start site. One cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end reads alignment. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. We effectively deduplicate the PE2 based on the presence of the PE1 UMI by pairing the PE1 and PE2 reads with `fastq_pair ` (cite fastq_pair). 
 
 ```
 fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
@@ -220,7 +217,7 @@ fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
 ## RNA integrity score
 
-We measure RNA degradation by searching for overlap between paired end reads with `flash` and the resultant histogram output. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries. RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 base of RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library.  
+We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries (cite PEPPRO). RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library. Note that size selectino to remove adapter/adapter ligation products will inflate this value because small RNAs are selected against    
 
 ```
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
