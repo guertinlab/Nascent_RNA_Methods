@@ -204,7 +204,7 @@ The next step removes reads with a length shorter than 10 bases and reverse comp
 seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
 ```
 
-PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused (cite Kwak) and the 5´end of the RNA is often the transcription start site. One cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end reads alignment. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. We effectively deduplicate the PE2 based on the presence of the PE1 UMI by pairing the PE1 and PE2 reads with `fastq_pair ` (cite fastq_pair). 
+PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused (cite Kwak) and the 5´end of the RNA is often the transcription start site. One cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end reads alignment. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. We effectively deduplicate the PE2 based on the presence of the PE1 UMI by pairing the PE1 and PE2 reads with `fastq_pair` (cite fastq_pair). 
 
 ```
 fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
@@ -217,7 +217,7 @@ fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
 ## RNA integrity score
 
-We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output with `insert_size.R`. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries (cite PEPPRO). RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library. Note that size selection to remove adapter/adapter ligation products will inflate this value because small RNAs are inevitably selected against when trying to remove only the adapter band.    
+We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output with `insert_size.R`. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries (cite PEPPRO). RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library. Note that size selection to remove adapter/adapter ligation products will inflate this value because small RNAs are inevitably selected against when trying to remove only the adapter ligation band.    
 
 ```
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
