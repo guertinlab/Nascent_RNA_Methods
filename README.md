@@ -268,7 +268,7 @@ If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and mul
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
 --->
-In order to calculate the rDNA alignment rate, we first counts the number of reads prior to rDNA alignment and after removing rDNA aligned reads. By subtracting the post-alignment read count from the input, we calculate the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordantly aligned paired end 1 reads. Finally we calcualte the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
+In order to calculate the rDNA alignment rate, we first counts the number of reads prior to rDNA alignment and after removing rDNA aligned reads. By subtracting the post-alignment read count from the input, we calculate the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordantly aligned paired end 1 reads. Finally we calculate the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
 
 ```
 PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
