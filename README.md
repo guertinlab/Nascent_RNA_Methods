@@ -248,7 +248,7 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 ```
 
 ## Genome alignment
-The last processing step for individual libraries is to align to the genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sort the reads. 
+The last processing step for individual libraries is to align to the genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sorts the reads. 
 
 ```
 bowtie2 -p $cores --maxins 1000 -x hg38 --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
@@ -268,7 +268,7 @@ If concodarnt alignmnet rate are low this supercedes rDNA alignment rate and mul
 not_considering_overall_alignment_rate=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))" | awk -v myvar=$PE1_prior_rDNA '{print $1/myvar}')
 ```
 --->
-In order to calculate the rDNA alignment rate, we first counts the number of reads prior to rDNA alignment and after removing rDNA aligned reads. By subtracting the post-alignment read count from the input, we calculate the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordantly aligned paired end 1 reads. Finally we calculate the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
+In order to calculate the rDNA alignment rate, we count the number of reads before and after removing rDNA aligned reads; their difference is the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordant hg38-aligned paired end 1 reads. Lastly, we calculate the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
 
 ```
 PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
@@ -281,7 +281,6 @@ total_concordant=$(echo "$(($concordant_pe1+$total_rDNA))")
 rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_concordant" | bc)
 
 echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
-
 ```
 
 ## Mappability rate
@@ -297,15 +296,15 @@ echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
 
 ## Complexity and theoretical read depth
 
-We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates. 
+We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates and a genome the size/gene density of the human genome. 
 
-For the first metrics, the input FASTQ file is preprocessed and the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged in `${name}_complexity.log`. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot. We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
+For the first metrics, the input FASTQ file is preprocessed with adapter/adapter products and inserts less than 10 removed; the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged in `${name}_complexity.log`. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot. We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
 
 ```
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
 
-We need two factors to derive the constants to calculate the theoretical read depth for a specified concordantly aligned read depth. First, we divide the PE1 total raw reads by processed PE1 reads that have adapter contamination and that have inserts less than 10 bases removed. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome.  
+We need two factors to derive the constants to calculate the theoretical read depth for a specified concordantly aligned read depth. First, we divide the total raw paired end 1 reads by processed paired end 1 reads that have adapter contamination and inserts less than 10 bases removed. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome.  
 
 ```
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
@@ -323,20 +322,20 @@ PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
 factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
 ```
 
-Invoke `fqComplexity` with the `-x` and `-y` options specified to fit an asymptotic regression model to the factor-scaled log file.
+Invoke `fqComplexity` and specify the `-x` and `-y` options to fit an asymptotic regression model to the factor-scaled log file.
 
 ```
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
 ```
 
 Counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
-reads is too damn high. The QC metrics should be considered to determine whether the library is high quality, but if the library is deemed high quality but you have low sequencing depth use this equation.  
+reads is too high. The QC metrics should be considered to determine whether the library is high quality. If the library is deemed high quality and low sequencing depth, use this equation to determine practicality of increasing depth using the same libraries.   
 
 
 ## Get the reads in a BED
 First we extract all the paired end 1 reads and separate reads based on their alignment to the plus or minus strand.
 
-The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias herein, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software outputs a bigWig and BED file, but it also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigned the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
+The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias in this workflow, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software outputs a bigWig and BED file, but it also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigned the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
 
 The `awk` command turns the respective stranded files into BED6 files with strand information in column 6, then the files are concatenated and sorted.
 ```
@@ -356,7 +355,7 @@ cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n
 
 ## Run on efficiency
 
-RNA polymerases that are associated with gene bodies efficiently incorporate numcleotides during the run on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run on efficiently (cite Leighton cells reports and ROugvie 1988). Therefore, the pause index is used to quantify run on efficiency. Pause index is the density of signal in the promoter-proximal pause region divided by density in the gene body. Hoever, since pause windows are variable, pause indices can differ substantially depending upon what one considers the pause window. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be deflated. Here, we define the pause window for a gene as position 20 -120 downstream of the most prominent TSS. The most prominent TSS is determined by calcualating the density in this 20 - 120 window for all annotated TSSs and choosing the TSS upstream of the most RNA-polymerase dense region.   
+RNA polymerases that are associated with gene bodies efficiently incorporate nucleotides during the run on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run on efficiently (cite Leighton cells reports and ROugvie 1988). Therefore, the pause index is used to quantify run on efficiency. Pause index is the density of signal in the promoter-proximal pause region divided by density in the gene body. However, since pause windows are user-defined and variable, pause indices can differ substantially between metrics. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be artificially deflated. Here, we define the pause window for a gene as position 20 -120 downstream of the most prominent TSS. The most prominent TSS is determined by calcualating the density in this 20 - 120 window for all annotated TSSs and choosing the TSS upstream of the most RNA-polymerase dense region.   
 
 ```
 coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
