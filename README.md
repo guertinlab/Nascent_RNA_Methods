@@ -217,7 +217,7 @@ fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 
 ## RNA integrity score
 
-We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries (cite PEPPRO). RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library. Note that size selectino to remove adapter/adapter ligation products will inflate this value because small RNAs are selected against    
+We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output with `insert_size.R`. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries (cite PEPPRO). RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library. Note that size selection to remove adapter/adapter ligation products will inflate this value because small RNAs are inevitably selected against when trying to remove only the adapter band.    
 
 ```
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
@@ -237,12 +237,12 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 
 ## Remove reads aligning to rDNA
   
-By first aligning to the rDNA we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed. The `-f 0x4` flag of the `samtools fastq` command specifies that only unmapped reads should be included in the FASTQ output.    
+By first aligning to the rDNA, we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed. The `-f 0x4` flag of the `samtools fastq` command specifies that only unmapped reads should be included in the FASTQ output.    
 
 ```
 bowtie2 -p $cores -x human_rDNA -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
 
-#this effectively removes PE2-aligned reads with a rDNA-aligned mate
+#this removes PE2-aligned reads with a rDNA-aligned mate
 reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
 fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 ```
