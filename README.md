@@ -388,6 +388,8 @@ exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 ```
 ### To Do
 
+### Make hg38.fa and Annotation files variables
+
 ### shell script loop to string everything together and process all files in series
 
 ### cat the QC files in a directory and plot all together in lattice
