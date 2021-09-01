@@ -27,6 +27,6 @@ pdf(paste(prefix.name,'_exon_intron_ratio.pdf', sep=''), width=2.5, height=4, us
 par(pty="s")
 boxplot(log(all.data$ratio, base = 10), main = paste('median = ', round(median(all.data$ratio, na.rm = TRUE), 2)),
         pch = 16, outline=FALSE, ylab=expression("log"[10]~"(Exon Density / Intron Density)"))
-abline(h = log(1, base = 10), col='blue', lty = 2)
+abline(h = log(2, base = 10), col='blue', lty = 2)
 dev.off()
 
