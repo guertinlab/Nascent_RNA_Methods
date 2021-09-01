@@ -148,7 +148,7 @@ We initialize six variables at the start:
 
 `$filename`: name of the gzipped FASTQ file
 
-`$release`: Ensembl gene annotation release number
+`$annotation_prefix`: Ensembl gene annotation GTF prefix
 
 `$UMI_length`: length of the UMI on the 5´ end of the paired end 1 read.
 
@@ -156,14 +156,16 @@ We initialize six variables at the start:
 
 `$cores`: number of cores for parallel processing
 
-`$genome`: the basename of the genome index files from `bowtie2-build`
+`$genome`: the genome FASTA file
 
-`$prealign_rdna`: the basename of the prealign rDNA index files from `bowtie2-build`
+`$genome_index`: the basename of the genome index files from `bowtie2-build`
+
+`$prealign_rdna_index`: the basename of the prealign rDNA index files from `bowtie2-build`
 
 ```
 directory=/Users/guertinlab/sequencing_run1 
 filename=MCF7_20minE2_rep2_PE1.fastq.gz
-release=104
+annotation_prefix=Homo_sapiens.GRCh38.104
 UMI_length=8
 read_size=30
 cores=6
@@ -246,7 +248,7 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 By first aligning to the rDNA, we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally between 10 - 15% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed. The `-f 0x4` flag of the `samtools fastq` command specifies that only unmapped reads should be included in the FASTQ output.    
 
 ```
-bowtie2 -p $cores -x $prealign_rdna -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
+bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
 
 #this removes PE2-aligned reads with a rDNA-aligned mate
 reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
@@ -257,7 +259,7 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 The last processing step for individual libraries is to align to the genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sorts the reads. 
 
 ```
-bowtie2 -p $cores --maxins 1000 -x $genome --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
+bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
 ```
 
 ## rDNA alignment rate
