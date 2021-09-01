@@ -168,10 +168,12 @@ We initialize six variables at the start:
 directory=/Users/guertinlab/sequencing_run1 
 filename=MCF7_20minE2_rep2_PE1.fastq.gz
 annotation_prefix=Homo_sapiens.GRCh38.104 
+chrom_order_file=hg38.chrom.order.txt
 UMI_length=8
 read_size=30
 cores=6
-genome=hg38
+genome=hg38.fa
+genome_index=hg38
 prealign_rdna=human_rDNA
 ```
 
