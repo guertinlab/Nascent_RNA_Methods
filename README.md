@@ -412,7 +412,7 @@ prealign_rdna=human_rDNA
 
 cd $directory 
 
-for $filename in *PE1.fastq.gz
+for filename in *PE1.fastq.gz
 do
     name=$(echo $filename | awk -F"_PE1.fastq.gz" '{print $1}')
     echo $name
