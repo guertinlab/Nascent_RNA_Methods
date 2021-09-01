@@ -394,6 +394,98 @@ exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 
 ### shell script loop to string everything together and process all files in series
 
+```
+#initialize variables
+directory=/Users/guertinlab/sequencing_run1 
+release=104
+UMI_length=8
+read_size=30
+cores=6
+genome=hg38
+prealign_rdna=human_rDNA
+
+cd $directory 
+
+for $filename in *PE1.fastq.gz
+do
+    name=$(echo $filename | awk -F"_PE1.fastq.gz" '{print $1}')
+    echo $name
+    echo 'unzipping raw' $name 'files'
+    gunzip ${name}_PE*.fastq.gz
+    echo 'removing dual adapter ligations and calculating the fraction of adapter/adapters in' $name
+    cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
+    cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
+    PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
+    PE1_w_Adapter=$(wc -l ${name}_PE1_short.fastq | awk '{print $1/4}')
+    AAligation=$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)
+    echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
+    echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
+    echo 'removing short RNA insertions and reverse complementing in' $name
+    seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq
+    echo 'removing PCR duplicates from' $name
+    fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
+    PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
+    fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
+    echo 'calculating and plotting RNA insert sizes from' $name
+    flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
+    insert_size.R ${name}.hist ${UMI_length}
+    rm ${name}_PE*_noadap.fastq.paired.fq
+    echo 'trimming off the UMI from' $name
+    seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq > ${name}_PE1_processed.fastq
+    seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
+    echo 'aligning' $name 'to rDNA and removing aligned reads'
+    bowtie2 -p $cores -x $prealign_rdna -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
+    reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
+    fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
+    echo 'aligning' $name 'to the genome'
+    bowtie2 -p $cores --maxins 1000 -x $genome --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
+    PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
+    PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
+    total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
+    echo 'calcualting rDNA and genomic alignment rates for' $name
+    concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
+    total_concordant=$(echo "$(($concordant_pe1+$total_rDNA))")
+    rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_concordant" | bc)
+    echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
+    map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
+    pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
+    alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
+    echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
+    echo 'plotting and calculating complexity for' $name
+    fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
+    echo 'calculating and plotting theoretical sequencing depth to achieve a defined number of concordantly aligned reads for' $name
+    PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
+    PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
+    factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
+    echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
+    echo $factorX | awk '{print 1/$1}'
+    PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
+    factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
+    fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
+    echo 'Separating paired end reads and creating genomic BED and bigWig intensity files for' $name
+    samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
+    samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
+    samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
+#hard coded hg38.fa genome file here    
+    seqOutBias hg38.fa ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size
+    seqOutBias hg38.fa ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size
+    awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"+"}' ${name}_PE1_plus.bed > ${name}_PE1_plus_strand.bed
+    awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"-"}' ${name}_PE1_minus.bed > ${name}_PE1_minus_strand.bed
+    cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
+    echo 'Calculating pause indices for' $name
+#hard coded Homo_sapiens.GRCh38.* annotation files here    
+    coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.pause.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
+    join -1 5 -2 5 ${name}_pause.bed Homo_sapiens.GRCh38.${release}.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
+    coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
+    pause_index.R ${name}_pause_body.bed
+    echo 'Calculating exon density / intron density as a metric for nascent RNA purity for' $name
+    coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.introns.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
+    coverageBed -sorted -counts -s -a Homo_sapiens.GRCh38.${release}.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g hg38.chrom.order.txt | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
+    exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
+    #clean up intermediate files and gzip
+done
+
+```
 ### cat the QC files in a directory and plot all together in lattice
 
 ### differential expression with DESeq2 and MA plotting
