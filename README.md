@@ -156,9 +156,9 @@ We initialize six variables at the start:
 
 `$cores`: number of cores for parallel processing
 
-`genome`: the basename of the genome index files from `bowtie2-build`
+`$genome`: the basename of the genome index files from `bowtie2-build`
 
-`prealign_rdna`: the basename of the prealign rDNA index files from `bowtie2-build`
+`$prealign_rdna`: the basename of the prealign rDNA index files from `bowtie2-build`
 
 ```
 directory=/Users/guertinlab/sequencing_run1 
