@@ -487,6 +487,10 @@ do
     coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
     exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
     #clean up intermediate files and gzip
+    rm ${name}_PE1_short.fastq
+    rm ${name}_PE1_short.fastq
+    rm ${name}_PE1_noadap.fastq
+    rm ${name}_PE2_noadap.fastq
 done
 
 ```
