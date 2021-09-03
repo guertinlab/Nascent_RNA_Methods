@@ -263,7 +263,7 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 The last processing step for individual libraries is to align to the genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sorts the reads. 
 
 ```
-bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
+bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | samtools sort - -o ${name}.bam
 ```
 
 ## rDNA alignment rate
@@ -443,7 +443,7 @@ do
     reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to the genome'
-    bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2_hg38.log | samtools view -b - | samtools sort - -o ${name}.bam
+    bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | samtools sort - -o ${name}.bam
     PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
     PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
