@@ -435,7 +435,6 @@ do
     echo 'calculating and plotting RNA insert sizes from' $name
     flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
     insert_size.R ${name}.hist ${UMI_length}
-    rm ${name}_PE*_noadap.fastq.paired.fq
     echo 'trimming off the UMI from' $name
     seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq > ${name}_PE1_processed.fastq
     seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
@@ -448,7 +447,7 @@ do
     PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
     PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
-    echo 'calcualting rDNA and genomic alignment rates for' $name
+    echo 'calculating rDNA and genomic alignment rates for' $name
     concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
     total_concordant=$(echo "$(($concordant_pe1+$total_rDNA))")
     rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_concordant" | bc)
@@ -488,9 +487,18 @@ do
     exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
     #clean up intermediate files and gzip
     rm ${name}_PE1_short.fastq
-    rm ${name}_PE1_short.fastq
+    rm ${name}_PE2_short.fastq
     rm ${name}_PE1_noadap.fastq
     rm ${name}_PE2_noadap.fastq
+    rm ${name}_PE1_noadap_trimmed.fastq
+    rm ${name}_PE1_dedup.fastq
+    rm ${name}_PE1_noadap.fastq.paired.fq   
+    rm ${name}_PE2_noadap.fastq.paired.fq 
+    rm ${name}_PE1_processed.fastq
+    rm ${name}_PE2_processed.fastq
+    rm ${name}_PE1.rDNA.fastq
+    rm ${name}_PE1.rDNA.fastq.paired.fq
+    rm ${name}_PE2_processed.fastq.paired.fq
 done
 
 ```
