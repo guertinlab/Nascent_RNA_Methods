@@ -492,14 +492,14 @@ do
     rm ${name}_PE2_noadap.fastq
     rm ${name}_PE1_noadap_trimmed.fastq
     rm ${name}_PE1_dedup.fastq
-    rm ${name}_PE1_noadap.fastq.paired.fq   
-    rm ${name}_PE2_noadap.fastq.paired.fq 
     rm ${name}_PE1_processed.fastq
     rm ${name}_PE2_processed.fastq
-    rm ${name}_PE1.rDNA.fastq
+    rm ${name}_PE1_noadap.fastq.paired.fq   
+    rm ${name}_PE2_noadap.fastq.paired.fq
     rm ${name}_PE1.rDNA.fastq.paired.fq
     rm ${name}_PE1.rDNA.fastq.single.fq
     rm ${name}_PE2_processed.fastq.paired.fq
+    rm ${name}_PE2_processed.fastq.single.fq
     rm ${name}_PE1_noadap.fastq.single.fq
     rm ${name}_PE2_noadap.fastq.single.fq
     gzip ${name}_PE1.fastq
