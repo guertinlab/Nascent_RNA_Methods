@@ -498,7 +498,10 @@ do
     rm ${name}_PE2_processed.fastq
     rm ${name}_PE1.rDNA.fastq
     rm ${name}_PE1.rDNA.fastq.paired.fq
+    rm ${name}_PE1.rDNA.fastq.single.fq
     rm ${name}_PE2_processed.fastq.paired.fq
+    rm ${name}_PE1_noadap.fastq.single.fq
+    rm ${name}_PE2_noadap.fastq.single.fq
     gzip ${name}_PE1.fastq
     gzip ${name}_PE2.fastq
 done
