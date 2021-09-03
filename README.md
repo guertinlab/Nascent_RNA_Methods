@@ -499,6 +499,8 @@ do
     rm ${name}_PE1.rDNA.fastq
     rm ${name}_PE1.rDNA.fastq.paired.fq
     rm ${name}_PE2_processed.fastq.paired.fq
+    gzip ${name}_PE1.fastq
+    gzip ${name}_PE2.fastq
 done
 
 ```
