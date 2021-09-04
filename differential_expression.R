@@ -9,7 +9,7 @@ n.treated =2
 
 plot.ma.lattice <- function(ma.df, filename = 'file.name', p = 0.01, title.main = "Differential PRO Expression",log2fold = 0.5)
   {
-  pdf(paste("MA_plot", filename, ".pdf", sep=''), width=3.83, height=3.83)
+  pdf(paste("MA_plot_", filename, ".pdf", sep=''), width=3.83, height=3.83)
   print(xyplot(ma.df$log2FoldChange ~ log(ma.df$baseMean, base=10),
                groups=(ma.df$padj < p & abs(ma.df$log2FoldChange) > log2fold & !is.na(ma.df$padj)),
                col=c("grey40","red"), main=title.main, scales="free", aspect=1, pch=20, cex=0.5,
