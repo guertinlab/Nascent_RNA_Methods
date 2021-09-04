@@ -1,3 +1,7 @@
+#!/usr/bin/env Rscript
+
+Args=commandArgs(TRUE)
+require(lattice)
 require(DESeq2)
 n.untreated = 2
 n.treated =2
@@ -17,7 +21,7 @@ plot.ma.lattice <- function(ma.df, filename = 'file.name', p = 0.01, title.main 
 
 
 
-x = read.table('Estrogen_treatment_PRO_gene_counts.bed', sep = '\t')
+x = read.table(Args[1], sep = '\t')
 rownames(x) = x[,1]
 
 x = x[,seq(2,to=ncol(x),by=2)]
@@ -31,4 +35,4 @@ deseq.df =estimateSizeFactors(deseq.df)
 deseq.df = estimateDispersions(deseq.df)
 deseq.df = nbinomWaldTest(deseq.df)
 res.deseq = results(deseq.df)
-plot.ma.lattice(res.deseq, filename = 'Estrogen_treatment', p = 0.05,log2fold = 0.0)
+plot.ma.lattice(res.deseq, filename = paste0(Args[2], 'pdf'), p = 0.05,log2fold = 0.0)
