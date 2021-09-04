@@ -41,12 +41,14 @@ wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_p
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/plot_all_metrics.R
 
 chmod +x insert_size.R
 chmod +x fqComplexity
 chmod +x complexity_pro.R
 chmod +x pause_index.R
 chmod +x exon_intron_ratio.R
+chmod +x plot_all_metrics.R
 ```
 The software dependencies and R scripts should be moved to a directory within the `$PATH` variable.      
 
@@ -392,10 +394,6 @@ coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed -b
 
 exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 ```
-### To Do
-
-### Make hg38.fa and Annotation files variables
-
 ### shell script loop to string everything together and process all files in series
 
 ```
@@ -514,6 +512,9 @@ done
 
 ```
 cat *_QC_metrics.txt | awk '!x[$0]++' > project_QC_metrics.txt 
+
+plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
+
 ```
 
 ### differential expression with DESeq2 and MA plotting
