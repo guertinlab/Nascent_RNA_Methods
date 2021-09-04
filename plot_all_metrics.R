@@ -38,8 +38,8 @@ pdf(paste0(Args[2], '.pdf'), width = width.pdf, height=10)
          threshold = x$threshold,
                    panel=function(..., threshold, subscripts, fill.color, fill.color.2) {
                        threshold = unique(threshold[subscripts])
-                       fill.color = c('light green','pink', 'light green', 'light green', 'pink', 'light green', 'pink')
-                       fill.color.2 = c('pink','light green', 'pink', 'pink', 'light green', 'pink', 'light green')
+                       fill.color = c('#D2F9D2','#FF5076', '#D2F9D2', '#D2F9D2', '#FF5076', '#D2F9D2', '#FF5076')
+                       fill.color.2 = c('#FF5076','#D2F9D2', '#FF5076', '#FF5076', '#D2F9D2', '#FF5076', '#D2F9D2')
                        grid.rect(x=unit(0.5, "npc"), y=unit(threshold, "native"),
                                  width=unit(1, "npc"), height=unit(10, "npc"),
                                  just = c("center", "top"),
