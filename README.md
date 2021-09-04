@@ -42,6 +42,7 @@ wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/inser
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/pause_index.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_intron_ratio.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/plot_all_metrics.R
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/differential_expression.R
 
 chmod +x insert_size.R
 chmod +x fqComplexity
@@ -49,6 +50,7 @@ chmod +x complexity_pro.R
 chmod +x pause_index.R
 chmod +x exon_intron_ratio.R
 chmod +x plot_all_metrics.R
+chmod +x differential_expression.R
 ```
 The software dependencies and R scripts should be moved to a directory within the `$PATH` variable.      
 
