@@ -529,5 +529,6 @@ do
     name=$(echo $filename | awk -F"_PE1_signal.bed" '{print $1}')
     coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b $filename -g $chrom_order_file | awk '{OFS="\t";} {print $5,$7}' > ${name}_gene_counts.bed
 done
+paste -d'\t' *_gene_counts.bed > Estrogen_treatment_PRO_gene_counts.bed 
 ```
 
