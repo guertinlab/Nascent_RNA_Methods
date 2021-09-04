@@ -521,9 +521,13 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 
 ```
 annotation_prefix=Homo_sapiens.GRCh38.104 
+chrom_order_file=hg38.chrom.order.txt
 sort -k1,1 -k2,2n $annotation_prefix.bed > $annotation_prefix.sorted.bed 
-#coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b *_PE1_signal.bed -g $chrom_order_file | head
-#| awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
+for filename in *_PE1_signal.bed 
+do
+    name=$(echo $filename | awk -F"_PE1_signal.bed" '{print $1}')
+    coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b $filename -g $chrom_order_file | awk '{OFS="\t";} {print $5,$7}' > ${name}_gene_counts.bed
+done
 ```
 
