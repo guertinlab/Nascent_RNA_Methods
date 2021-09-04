@@ -512,6 +512,10 @@ done
 ```
 ### cat the QC files in a directory and plot all together in lattice
 
+```
+cat *_QC_metrics.txt | awk '!x[$0]++' > project_QC_metrics.txt 
+```
+
 ### differential expression with DESeq2 and MA plotting
 
 
