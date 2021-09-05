@@ -38,7 +38,7 @@ We present novel quality control metrics and specialized software herein, but mu
 
 `DESeq2`: https://bioconductor.org/packages/release/bioc/html/DESeq2.html
 
-In addition, to facilitate data analysis and graphical output, we developed the software and R scripts. The following code uses `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
+In addition, to facilitate data analysis and graphical output, we developed the following software and R scripts. Below, we use `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
 
 
 ```
@@ -58,7 +58,7 @@ chmod +x exon_intron_ratio.R
 chmod +x plot_all_metrics.R
 chmod +x differential_expression.R
 ```
-The software dependencies and R scripts should be moved to a directory within the `$PATH` variable.      
+Next, move the software dependencies and R scripts to a directory within the `$PATH` variable.      
 
 ## Reference genomes
 
