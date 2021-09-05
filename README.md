@@ -184,7 +184,7 @@ read_size=30
 cores=6
 genome=hg38.fa
 genome_index=hg38
-prealign_rdna=human_rDNA
+prealign_rdna_index=human_rDNA
 ```
 
 ## Preprocessing 
