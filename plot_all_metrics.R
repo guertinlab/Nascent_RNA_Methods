@@ -2,7 +2,6 @@
 Args=commandArgs(TRUE)
 
 require(lattice)
-require(grid)
 
 x = read.table(Args[1], sep = '\t', header = TRUE)
 
