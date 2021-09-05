@@ -33,7 +33,9 @@ We present novel quality control metrics and specialized software herein, but mu
 `wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
 
 `R` packages:
+
 `lattice`: https://cran.r-project.org/web/packages/lattice/lattice.pdf
+
 `DESeq2`: https://bioconductor.org/packages/release/bioc/html/DESeq2.html
 
 In addition, to facilitate data analysis and graphical output, we developed the software and R scripts. The following code uses `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
