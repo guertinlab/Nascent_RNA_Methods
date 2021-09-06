@@ -557,7 +557,7 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 
 ## Differential expression with DESeq2
 
-
+Lastly, 
 
 
 ```
@@ -575,6 +575,7 @@ paste -d'\t' *_gene_counts.bed > Estrogen_treatment_PRO_gene_counts.bed
 differential_expression.R Estrogen_treatment_PRO_gene_counts.bed Estrogen_treatment
 
 ```
+## Conclusions
 
 Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you call _guidelines_ than actual rules.”
 
