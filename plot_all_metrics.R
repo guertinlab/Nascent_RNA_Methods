@@ -41,11 +41,11 @@ pdf(paste0(Args[2], '.pdf'), width = width.pdf, height=10)
                        fill.color = c('#D2F9D2','#FF5076', '#D2F9D2', '#D2F9D2', '#FF5076', '#D2F9D2', '#FF5076')
                        fill.color.2 = c('#FF5076','#D2F9D2', '#FF5076', '#FF5076', '#D2F9D2', '#FF5076', '#D2F9D2')
                        grid.rect(x=unit(0.5, "npc"), y=unit(threshold, "native"),
-                                 width=unit(1, "npc"), height=unit(10, "npc"),
+                                 width=unit(1, "npc"), height=unit(1, "npc"),
                                  just = c("center", "top"),
                                  gp = gpar(col = 'transparent', lty=2, fill = fill.color[packet.number()]))
                        grid.rect(x=unit(0.5, "npc"), y=unit(threshold, "native"),
-                                 width=unit(1, "npc"), height=unit(10, "npc"),
+                                 width=unit(1, "npc"), height=unit(1, "npc"),
                                  just = c("center", "bottom"),
                                  gp = gpar(col = 'transparent', lty=2, fill = fill.color.2[packet.number()]))
                        panel.barchart(...)
