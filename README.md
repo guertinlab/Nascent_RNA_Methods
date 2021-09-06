@@ -557,7 +557,7 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 
 ## Differential expression with DESeq2
 
-Differential expression analysis is a common first step in analysis of processed RNA-seq data. Below we outline the `bedtools` commands to count reads within gene annotations and we provide an `R` script for differentially expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene.  For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but we recommend more sophisticated methods to define primary transcripts [cite prmarytranscript annotation and Deconvolution of Expression for Nascent RNA Sequencing Data (DENR) ]. 
+Differential expression analysis is a common first step in analysis of processed RNA-seq data. Below we outline the `bedtools` commands to count reads within gene annotations and we provide an `R` script for differentially expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene.  For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but we recommend more sophisticated methods to define primary transcripts [cite prmarytranscript annotation and Deconvolution of Expression for Nascent RNA Sequencing Data (DENR) ]. The `R` script require three ordered arguments: 1) a file with the signal counts for each gene in every even row, 2) the prefix for the baseline experimental condition for which to compare (often termed "untreated"), 3) prefix name for the output PDF plot. 
 
 
 ```
@@ -568,11 +568,11 @@ sort -k1,1 -k2,2n $annotation_prefix.bed > $annotation_prefix.sorted.bed
 for filename in *_PE1_signal.bed 
 do
     name=$(echo $filename | awk -F"_PE1_signal.bed" '{print $1}')
-    coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b $filename -g $chrom_order_file | awk '{OFS="\t";} {print $4,$7}' > ${name}_gene_counts.bed
+    coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b $filename -g $chrom_order_file | awk '{OFS="\t";} {print $4,$7}' > ${name}_gene_counts.txt
 done
-paste -d'\t' *_gene_counts.bed > Estrogen_treatment_PRO_gene_counts.bed 
+paste -d'\t' *_gene_counts.bed > Estrogen_treatment_PRO_gene_counts.txt 
 
-differential_expression.R Estrogen_treatment_PRO_gene_counts.bed T47D_Starved_DMSO_rep1 Estrogen_treatment 
+differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DMSO_rep1 Estrogen_treatment 
 
 ```
 ## Conclusions
