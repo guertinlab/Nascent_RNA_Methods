@@ -402,7 +402,32 @@ coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed -b
 
 exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 ```
-### shell script loop to string everything together and process all files in series
+## Remove intermediate files and zip raw sequencing files
+
+```
+rm ${name}_PE1_short.fastq
+rm ${name}_PE2_short.fastq
+rm ${name}_PE1_noadap.fastq
+rm ${name}_PE2_noadap.fastq
+rm ${name}_PE1_noadap_trimmed.fastq
+rm ${name}_PE1_dedup.fastq
+rm ${name}_PE1_processed.fastq
+rm ${name}_PE2_processed.fastq
+rm ${name}_PE1.rDNA.fastq.paired.fq
+rm ${name}_PE1.rDNA.fastq.single.fq
+rm ${name}_PE2_processed.fastq.paired.fq
+rm ${name}_PE2_processed.fastq.single.fq
+rm ${name}_PE1_noadap.fastq.single.fq
+rm ${name}_PE2_noadap.fastq.single.fq
+rm ${name}.extendedFrags.fastq.gz
+rm ${name}.notCombined_2.fastq.gz
+rm ${name}.notCombined_1.fastq.gz
+gzip ${name}_PE1.fastq
+gzip ${name}_PE2.fastq
+```
+
+
+## shell script loop to string everything together and process all files in series
 
 ```
 #initialize variables
