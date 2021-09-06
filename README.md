@@ -547,16 +547,17 @@ done
 ```
 ## Plot all QC metrics
 
-Individual detailed quality controls plots provide valuable information about the data, but each metric can be distilled to a single value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not considered absolute, but as a guideline. Below, we concatenate all the QC metrics for the experiments and plot the results. Thresholds lines are included on the plots. One can quickly glance at the plot to determine whether the QC values fall within the light green shaded area. If values are outside the light green shaded area, then we recommend looking back at the more detailed QC plots to diagnose possible issues with the libraries.  
+Individual detailed quality controls plots provide valuable information about the data, but each metric can be distilled to a single value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not considered absolute, they are more what you’d call guidelines than actual rules. Below, we concatenate all the QC metrics for the experiments and plot the results. Thresholds lines are included on the plots. One can quickly glance at the plot to determine whether the QC values fall within the light green shaded area. If values are outside the light green shaded area, then we recommend looking back at the more detailed QC plots to diagnose possible issues with the libraries.  
 
 ```
 cat *_QC_metrics.txt | awk '!x[$0]++' > project_QC_metrics.txt 
 
 plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
-
 ```
 
-## differential expression with DESeq2 and MA plotting
+## Differential expression with DESeq2
+
+
 
 ```
 annotation_prefix=Homo_sapiens.GRCh38.104 
