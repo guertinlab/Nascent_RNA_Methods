@@ -404,6 +404,7 @@ exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 ```
 ## Remove intermediate files and zip raw sequencing files
 
+Calculating these quality control metrics necessitates many intermediate files. Many files are unused output from various processing steps, but many are only used briefly for counting reads before and after processing. FASTQ files are large and rarely used in downstream analyses, so the following code chunk removes intermediate FASTQ files and compresses the original files. 
 ```
 rm ${name}_PE1_short.fastq
 rm ${name}_PE2_short.fastq
@@ -426,8 +427,11 @@ gzip ${name}_PE1.fastq
 gzip ${name}_PE2.fastq
 ```
 
+## Process all files in series
 
-## shell script loop to string everything together and process all files in series
+Although it is a useful exercise to run through the code chunks above individually and look at each output, an be easily adapted to perform all processing in parallel using a job scheduler and submission of a batch script for each set of input files.
+
+
 
 ```
 #initialize variables
