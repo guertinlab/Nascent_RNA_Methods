@@ -146,7 +146,7 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | \
 
 # Processing PRO-seq data
 
-PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts (cite primaryTranscriptAnnotation), identifying putative enhancers (cite dREG), detecting prominent transcription start sites (cite something I saw come out recently but haven't tested yet), or quantifying changes in RNA Polymerase density in different genic features (cite Fabiana and Leighton). Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
+PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts (cite primaryTranscriptAnnotation), identifying putative enhancers (cite dREG), detecting prominent transcription start sites (Deconvolution of Expression for Nascent RNA Sequencing Data (DENR) ), or quantifying changes in RNA Polymerase density in different genic features (cite Fabiana and Leighton). Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
 
 ## Initialize variables
 
@@ -557,7 +557,7 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 
 ## Differential expression with DESeq2
 
-Lastly, 
+Differential expression analysis is a common first step in analysis of processed RNA-seq data. Below we outline the `bedtools` commands to count reads within gene annotations and we provide an `R` script for differentially expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene.  For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but we recommend more sophisticated methods to define primary transcripts [cite prmarytranscript annotation and Deconvolution of Expression for Nascent RNA Sequencing Data (DENR) ]. 
 
 
 ```
