@@ -435,7 +435,7 @@ It is a useful exercise to run through the code chunks above individually and lo
 
 ```
 #initialize variables
-directory=/Users/guertinlab/sequencing_run1 
+directory=/Users/guertinlab/sequencing_run1_series 
 annotation_prefix=Homo_sapiens.GRCh38.104 
 chrom_order_file=hg38.chrom.order.txt
 UMI_length=8
@@ -545,7 +545,9 @@ do
 done
 
 ```
-## cat the QC files in a directory and plot all together in lattice
+## Plot all QC metrics
+
+Individual detailed quality controls plots provide valuable information about the data, but each metric can be distilled to a single value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not considered absolute, but as a guideline. Below, we concatenate all the QC metrics for the experiments and plot the results. Thresholds lines are included on the plots. One can quickly glance at the plot to determine whether the QC values fall within the light green shaded area. If values are outside the light green shaded area, then we recommend looking back at the more detailed QC plots to diagnose possible issues with the libraries.  
 
 ```
 cat *_QC_metrics.txt | awk '!x[$0]++' > project_QC_metrics.txt 
