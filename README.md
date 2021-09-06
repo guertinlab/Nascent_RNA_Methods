@@ -176,7 +176,7 @@ We initialize six variables at the start:
 
 ```
 directory=/Users/guertinlab/sequencing_run1 
-filename=MCF7_20minE2_rep2_PE1.fastq.gz
+filename=T47D_Startved_DMSO_rep1_PE1.fastq.gz
 annotation_prefix=Homo_sapiens.GRCh38.104 
 chrom_order_file=hg38.chrom.order.txt
 UMI_length=8
@@ -572,7 +572,7 @@ do
 done
 paste -d'\t' *_gene_counts.bed > Estrogen_treatment_PRO_gene_counts.bed 
 
-differential_expression.R Estrogen_treatment_PRO_gene_counts.bed Estrogen_treatment
+differential_expression.R Estrogen_treatment_PRO_gene_counts.bed Estrogen_treatment T47D_Startved_DMSO_rep1
 
 ```
 ## Conclusions
