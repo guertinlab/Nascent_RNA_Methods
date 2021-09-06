@@ -429,7 +429,7 @@ gzip ${name}_PE2.fastq
 
 ## Process all files in series
 
-Although it is a useful exercise to run through the code chunks above individually and look at each output, an be easily adapted to perform all processing in parallel using a job scheduler and submission of a batch script for each set of input files.
+It is a useful exercise to run through the code chunks above individually and look at each output to gain further understanding of each step. A full understanding of the workflow allows the end user to modify the steps to account for modifications in the PRO-seq protocol. However, automation of routine processing and analysis is more practical once a workflow is established. Below, we provide a simple shell script loop that will process each set of files in series. This loop can be easily adapted to perform all processing in parallel using a job scheduler and submission of a batch script for each set of input files.
 
 
 
@@ -545,7 +545,7 @@ do
 done
 
 ```
-### cat the QC files in a directory and plot all together in lattice
+## cat the QC files in a directory and plot all together in lattice
 
 ```
 cat *_QC_metrics.txt | awk '!x[$0]++' > project_QC_metrics.txt 
@@ -554,7 +554,7 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 
 ```
 
-### differential expression with DESeq2 and MA plotting
+## differential expression with DESeq2 and MA plotting
 
 ```
 annotation_prefix=Homo_sapiens.GRCh38.104 
