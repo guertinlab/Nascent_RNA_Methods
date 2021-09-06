@@ -26,6 +26,9 @@ rownames(x) = x[,1]
 
 x = x[,seq(2,to=ncol(x),by=2)]
 
+colnames(x) = colnames(x)[,c(grep(Args[2], colnames(x)), c(1:length(colnames(x)))[!(c(1:length(colnames(x))) %in% grep(Args[2], colnames(x)))])]
+
+
 sample.conditions = factor(c(rep("untreated",n.untreated), rep("treated",n.treated)),
                            levels=c("untreated","treated"))
 
