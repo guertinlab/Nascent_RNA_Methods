@@ -8,7 +8,7 @@ Many processes, downloads, and software installations are reused in analyses. Al
 
 ## Dependencies, software, and scripts
 
-We present novel quality control metrics and specialized software herein, but much of the workflow depends upon more general software. Fortunately, this software is well-maintained and documented, so we only provide a short description and the links below. 
+We present novel quality control metrics and specialized software and scripts herein, but much of the workflow depends upon more general software. Fortunately, this software is well-maintained and documented, so we provide a short description and the links below. 
 
 [Cite all the software in line]
 
