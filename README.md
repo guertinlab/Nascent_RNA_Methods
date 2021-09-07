@@ -351,7 +351,7 @@ fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
 ```
 
 Counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
-reads is too high. The QC metrics should be considered to determine whether the library is high quality. If the library is deemed high quality and low sequencing depth, use this equation to determine practicality of increasing depth using the same libraries.   
+reads is too high. The QC metrics should be considered to determine whether the library is high quality. If the library is deemed high quality and low sequencing depth, use this equation to determine the practicality of increasing depth using the same libraries.   
 
 
 ## Get the reads in a BED
