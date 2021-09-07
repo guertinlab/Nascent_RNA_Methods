@@ -220,7 +220,7 @@ echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
 echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 ```
 
-The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand. This is necessary because the paired end 1 read rom PRO-seq data sequences the 3´ end of the original nascent RNA. 
+The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand. This is necessary because the PRO-seq protocol sequences the 3´ end of the original nascent RNA as the paired end 1 read. 
 
 ```
 seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
