@@ -25,9 +25,7 @@ Many processes, downloads, and software installations are reused throughout the 
 
 ## Dependencies, software, and scripts
 
-We present novel quality control metrics and specialized software and scripts herein, but much of the workflow depends upon more general software. Fortunately, this software is well-maintained and documented, so we provide a short description and the links below. 
-
-[Cite all the software in line]
+We present specialized software and scripts herein, but much of the workflow depends upon more general software. These general bioinformatic software tools are well-maintained and documented, so we provide short descriptions and the links below. 
 
 `bedtools` :  a comprehensive suite of tools that efficiently perform a wide range of operations on genomic intervals.  https://bedtools.readthedocs.io/en/latest/ [@quinlan2010bedtools]
 
