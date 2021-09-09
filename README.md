@@ -1,7 +1,7 @@
 ---
-title: "analysis of nascent RNA"
+title: "Processing and evaluating the quality of genome-wide nascent transcription profiling libraries"
 author:
-- "Tommy G. Scott"
+- "Thomas G. Scott"
 - "André L. Martins"
 - "Michael J. Guertin"
 
