@@ -15,12 +15,13 @@ Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleot
 
 # Nature of PRO-seq experiments
 
+I need to first pass this...
 We describe analysis of paired end libraries with unique molecular identifiers, which allow for calculations of RNA fragment length and library complexity.
 
 
 # One time software installations, downloads, and processing steps
 
-Many processes, downloads, and software installations are reused in analyses. Although we refer to these as "one-time" steps, annotations are often updated and newer software versions are released.  
+Many processes, downloads, and software installations are reused throughout the analyses. Although we refer to these as "one-time" steps, users should periodically check for updated annotations and new software releases. 
 
 ## Dependencies, software, and scripts
 
