@@ -565,16 +565,15 @@ annotation_prefix=Homo_sapiens.GRCh38.104
 chrom_order_file=hg38.chrom.order.txt
 sort -k1,1 -k2,2n $annotation_prefix.bed > $annotation_prefix.sorted.bed 
 
-for filename in *_PE1_signal.bed 
+for filename in *_PE1_signal.bed
 do
     name=$(echo $filename | awk -F"_PE1_signal.bed" '{print $1}')
-    coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b $filename -g $chrom_order_file | awk '{OFS="\t";} {print $4,$7}' > ${name}_gene_counts.txt
+    echo -e  "\t${name}" > ${name}_gene_counts.txt
+    coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b $filename -g $chrom_order_file | awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
 done
-#paste -d'\t' *_gene_counts.bed > Estrogen_treatment_PRO_gene_counts.txt
-#Right?
-paste -d'\t' *_gene_counts.txt > Estrogen_treatment_PRO_gene_counts.txt 
+paste -d'\t' *_gene_counts.txt > Estrogen_treatment_PRO_gene_counts.txt
 
-differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DMSO_rep1 Estrogen_treatment 
+differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DMSO Estrogen_treatment
 
 ```
 ## Conclusions
