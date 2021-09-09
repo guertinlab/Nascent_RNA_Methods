@@ -21,13 +21,12 @@ plot.ma.lattice <- function(ma.df, filename = 'file.name', p = 0.01, title.main 
 
 
 
-x = read.table(Args[1], sep = '\t')
+x = read.table(Args[1], sep = '\t', header = TRUE)
 rownames(x) = x[,1]
 
 x = x[,seq(2,to=ncol(x),by=2)]
 
-colnames(x) = colnames(x)[,c(grep(Args[2], colnames(x)), c(1:length(colnames(x)))[!(c(1:length(colnames(x))) %in% grep(Args[2], colnames(x)))])]
-
+x = x[c(grep(Args[2], colnames(x)), c(1:length(colnames(x)))[!(c(1:length(colnames(x))) %in% grep(Args[2], colnames(x)))]),]
 
 sample.conditions = factor(c(rep("untreated",n.untreated), rep("treated",n.treated)),
                            levels=c("untreated","treated"))
