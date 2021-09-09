@@ -29,15 +29,15 @@ We present specialized software and scripts herein, but much of the workflow dep
 
 `bedtools` :  a comprehensive suite of tools that efficiently perform a wide range of operations on genomic intervals.  https://bedtools.readthedocs.io/en/latest/ [@quinlan2010bedtools]
 
-`bowtie2` : aligns sequence reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml [@langmead2012fast]
+`bowtie2` : aligns sequencing reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml [@langmead2012fast]
 
-`cutadapt` : removes a defined sequence, such as adapter sequence, from sequence reads.  https://cutadapt.readthedocs.io/en/stable/
+`cutadapt` : removes a defined sequence, such as adapter sequence, from sequencing reads.  https://cutadapt.readthedocs.io/en/stable/
 
-`fastq_pair` : outputs only sequence reads that have a matched paired end read and a separates unpaired reads. https://github.com/linsalrob/fastq-pair 
+`fastq_pair` : outputs only sequencing reads that have a matched paired end read. https://github.com/linsalrob/fastq-pair 
 
 `FLASH` : merges paired end reads by detecting overlapping sequence. https://ccb.jhu.edu/software/FLASH/ 
 
-`fqdedup` : removes duplicated sequences from FASTQ files with a small memory footprint. https://github.com/guertinlab/fqdedup
+`fqdedup` : removes duplicated sequences from FASTQ files. https://github.com/guertinlab/fqdedup
 
 `samtools` : a suite of tools for parsing and interfacing with high throughput sequencing data files. http://www.htslib.org
 
