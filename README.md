@@ -120,7 +120,7 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$10,$14,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' > Homo_sapiens.GRCh38.${release}.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.bed
 ```
 
 The goal of the following operations is to output a set of exons that excludes all instances of first exons, output all introns, and output a set of all potential pause regions for a gene by taking the region for 20 - 120 downstream of all exon 1 annotations. The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. We exclude all first exon coordinates with `subtractBed`, then `intersectBed` reassigns gene names to all remaining exons. The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
