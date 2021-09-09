@@ -3,9 +3,6 @@
 Args=commandArgs(TRUE)
 require(lattice)
 require(DESeq2)
-n.untreated = 2
-n.treated =2
-
 
 plot.ma.lattice <- function(ma.df, filename = 'file.name', p = 0.01, title.main = "Differential PRO Expression",log2fold = 0.5)
   {
@@ -18,21 +15,17 @@ plot.ma.lattice <- function(ma.df, filename = 'file.name', p = 0.01, title.main 
   dev.off()
 }
 
-
-
-
 x = read.table(Args[1], sep = '\t', header = TRUE)
 rownames(x) = x[,1]
-
 x = x[,seq(2,to=ncol(x),by=2)]
-
 x = x[,c(grep(Args[2], colnames(x)), c(1:length(colnames(x)))[!(c(1:length(colnames(x))) %in% grep(Args[2], colnames(x)))])]
 
+n.untreated = as.numeric(length(grep(Args[2], colnames(x))))
+n.treated = ncol(x) - n.untreated
 sample.conditions = factor(c(rep("untreated",n.untreated), rep("treated",n.treated)),
                            levels=c("untreated","treated"))
 
 deseq.df = DESeqDataSetFromMatrix(x, DataFrame(sample.conditions), ~ sample.conditions)
-
 deseq.df =estimateSizeFactors(deseq.df)
 deseq.df = estimateDispersions(deseq.df)
 deseq.df = nbinomWaldTest(deseq.df)
