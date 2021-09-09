@@ -368,6 +368,11 @@ seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --
 seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
 
 cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
+
+#This also works, and sorting gives the identical bed file, but I'm guessing we don't need to if the only difference is which strand comes first when there's signal on both? 
+#Need to test that, and also haven't looked at what happens with the bigWig
+#seqOutBias $genome ${name}_PE1.bam --no-scale --bed ${name}_PE1_signal.bed --bw=${name}_PE1.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+
 ```
 
 
