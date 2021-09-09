@@ -22,7 +22,7 @@ We present novel quality control metrics and specialized software and scripts he
 
 [Cite all the software in line]
 
-`bedtools` :  a comprehensive suite of tools that efficiently perform a wide range of operations on genomic intervals.  https://bedtools.readthedocs.io/en/latest/
+`bedtools` :  a comprehensive suite of tools that efficiently perform a wide range of operations on genomic intervals.  https://bedtools.readthedocs.io/en/latest/ [@quinlan2010bedtools]
 
 `bowtie2` : aligns sequence reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 
