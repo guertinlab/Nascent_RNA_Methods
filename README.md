@@ -1,4 +1,14 @@
-# Nascent_RNA_Methods
+---
+title: "analysis of nascent RNA"
+author:
+- "Tommy G. Scott"
+- "André L. Martins"
+- "Michael J. Guertin"
+
+---
+
+
+# Abstract
 
 Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here, we deconstruct a recently published genomic nascent RNA processing pipeline (PEPPRO) into its components. The analyses are presented as individual code chunks with comprehensive details. PRO-seq experiments are evolving and variations can be found throughout the literature. We describe analysis of paired end libraries that contain a unique molecular identifier on the the 5´ adapter adjacent to the RNA insert. These two features allow for calculations of RNA fragment length and library complexity. Our hope is that the end users will adopt the analysis framework and modify the workflow as needed. We describe and provide the code to calculate the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
 
@@ -40,8 +50,8 @@ We present novel quality control metrics and specialized software and scripts he
 
 In addition, to facilitate data analysis and graphical output, we developed the following software and R scripts. Below, we use `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
 
-
-```
+\scriptsize
+```bash 
 wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/fqComplexity
 wget https://raw.githubusercontent.com/guertinlab/fqComplexity/main/complexity_pro.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/insert_size.R
@@ -58,6 +68,8 @@ chmod +x exon_intron_ratio.R
 chmod +x plot_all_metrics.R
 chmod +x differential_expression.R
 ```
+\normalsize
+
 Next, move the software dependencies and R scripts to a directory within the `$PATH` variable.      
 
 ## Reference genomes
@@ -368,11 +380,6 @@ seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --
 seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
 
 cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
-
-#This also works, and sorting gives the identical bed file, but I'm guessing we don't need to if the only difference is which strand comes first when there's signal on both? 
-#Need to test that, and also haven't looked at what happens with the bigWig
-#seqOutBias $genome ${name}_PE1.bam --no-scale --bed ${name}_PE1_signal.bed --bw=${name}_PE1.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-
 ```
 
 
@@ -578,4 +585,7 @@ differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DM
 ## Conclusions
 
 Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you call _guidelines_ than actual rules.”
+[@martins2018universal]
 
+
+# References
