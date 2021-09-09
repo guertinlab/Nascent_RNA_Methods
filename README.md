@@ -41,19 +41,19 @@ We present specialized software and scripts herein, but much of the workflow dep
 
 `samtools` : a suite of tools for parsing and interfacing with high throughput sequencing data files. http://www.htslib.org
 
-`seqOutBias` : software designed to correct enzymatic sequence biases that also has options to output BED and bigWig files with desired features. https://github.com/guertinlab/seqOutBias
+`seqOutBias` : software that parses files and outputs desired formats with the option to correct enzymatic sequence biases. https://github.com/guertinlab/seqOutBias
 
-`seqtk` : a multifunctional toolkit for processing sequence files. We only use two functionalities: trimming a defined number of bases from the ends of reads and reverse complementing sequence reads. https://github.com/lh3/seqtk
+`seqtk` : a multifunctional toolkit for processing sequence files, including trimming a defined number of bases from the ends of reads and reverse complementing sequencing reads. https://github.com/lh3/seqtk
 
 `wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
 
 `R` packages:
 
-`lattice`: https://cran.r-project.org/web/packages/lattice/lattice.pdf
+`lattice`: graphics plotting package.  https://cran.r-project.org/web/packages/lattice/lattice.pdf
 
-`DESeq2`: https://bioconductor.org/packages/release/bioc/html/DESeq2.html
+`DESeq2`: statistical package for quantifying differences in counts-based genomics data. https://bioconductor.org/packages/release/bioc/html/DESeq2.html
 
-In addition, to facilitate data analysis and graphical output, we developed the following software and R scripts. Below, we use `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
+In addition, we developed the following software and R scripts to facilitate data analysis and graphical output. Below, we use `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
 
 \scriptsize
 ```bash 
@@ -79,7 +79,7 @@ Next, move the software dependencies and R scripts to a directory within the `$P
 
 ## Reference genomes
 
-PRO-seq experiments have been performed in a variety of organisms including yeast (cite Booth), Drosophila (cite Kwak and cite Duarte), and humans (cite Sathyan). Analysis of the data requires alignment to a reference genome annotation. The first step is to use `wget` to retrieve the zipped reference genome. Many websites host the assembly data and one can simply use Google the organism name combined with the term "reference genome" to find the appropriate FASTA file. The `gunzip` command unzips the refence genome file and `bowtie2-build` indexes the file to allow for efficient alignment. The code also retrieves, unzips, and builds the human rDNA reference genome (cite refgenie). 
+PRO-seq experiments have been performed in a variety of organisms including yeast (cite Booth), Drosophila (cite Kwak and cite Duarte), and humans (cite Sathyan). Analysis of the data requires alignment to a reference genome annotation. The first step is to use `wget` to retrieve the reference genome. Many websites host the assembly data in FASTA format, such as the human genome build 38 shown below retrieved from the UCSC genome browser server. The `gunzip` command unzips the reference genome file and `bowtie2-build` indexes the file to allow for efficient alignment. The code also retrieves, unzips, and builds the human rDNA reference genome (cite refgenie) so that we can calculate rDNA alignment rates as a metric for nascent RNA purity.
 
 ```
 wget https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz
