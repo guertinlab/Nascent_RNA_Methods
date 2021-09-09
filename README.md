@@ -357,21 +357,17 @@ reads is too high. The QC metrics should be considered to determine whether the 
 ## Get the reads in a BED
 First we extract all the paired end 1 reads and separate reads based on their alignment to the plus or minus strand.
 
-The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias in this workflow, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software outputs a bigWig and BED file, but it also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigns the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
+The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias in this workflow, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software outputs a bigWig and BED6 file with strand information, but it also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigns the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
 
-The `awk` command turns the respective stranded files into BED6 files with strand information in column 6, then the files are concatenated and sorted.
 ```
 samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
 samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
 samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
     
-seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size
-seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size
+seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
 
-awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"+"}' ${name}_PE1_plus.bed > ${name}_PE1_plus_strand.bed
-awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"-"}' ${name}_PE1_minus.bed > ${name}_PE1_minus_strand.bed
-
-cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
+cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
 ```
 
 
@@ -506,11 +502,9 @@ do
     samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
     samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
     samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
-    seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size
-    seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size
-    awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"+"}' ${name}_PE1_plus.bed > ${name}_PE1_plus_strand.bed
-    awk '{OFS="\t";} {print $1,$2,$3,$4,$5,"-"}' ${name}_PE1_minus.bed > ${name}_PE1_minus_strand.bed
-    cat ${name}_PE1_plus_strand.bed ${name}_PE1_minus_strand.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
+    seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+    seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+    cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
     echo 'Calculating pause indices for' $name  
     coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
     join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
