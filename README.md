@@ -2,7 +2,7 @@
 title: "Processing and evaluating the quality of genome-wide nascent transcription profiling libraries"
 author:
 - "Thomas G. Scott"
-- "Andre L. Martins"
+- "André L. Martins"
 - "Michael J. Guertin"
 
 ---
