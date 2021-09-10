@@ -164,7 +164,7 @@ sort -k1,1 -k2,2n hg38.chrom.sizes | \
 \normalsize 
 # Processing PRO-seq data
 
-PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts [anderson2020defining], identifying putative enhancers [@wang2019identification], detecting prominent transcription start sites [@zhao2021deconvolution], or quantifying changes in RNA Polymerase density in different genic features [@core2012defining; duarte2016transcription; sathyan2019improved]. Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
+PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts [@anderson2020defining], identifying putative enhancers [@wang2019identification], detecting prominent transcription start sites [@zhao2021deconvolution], or quantifying changes in RNA Polymerase density in different genic features [@core2012defining; @duarte2016transcription; @sathyan2019improved]. Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
 
 ## Initialize variables
 
