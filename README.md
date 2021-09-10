@@ -629,7 +629,6 @@ differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DM
 ## Conclusions
 
 Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you call _guidelines_ than actual rules.”
-[@martins2018universal]
 
 
 # References
