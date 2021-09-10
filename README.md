@@ -1,6 +1,4 @@
 ---
-header-includes:
-- \usepackage{color}
 title: "Processing and evaluating the quality of genome-wide nascent transcription profiling libraries"
 author:
 - "Thomas G. Scott"
