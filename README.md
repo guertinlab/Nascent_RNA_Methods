@@ -30,27 +30,27 @@ We present specialized software and scripts herein, but much of the workflow dep
 
 `bowtie2` : aligns sequencing reads to reference sequences. http://bowtie-bio.sourceforge.net/bowtie2/index.shtml [@langmead2012fast]
 
-`cutadapt` : removes a defined sequence, such as adapter sequence, from sequencing reads.  https://cutadapt.readthedocs.io/en/stable/
+`cutadapt` : removes a defined sequence, such as adapter sequence, from sequencing reads.  https://cutadapt.readthedocs.io/en/stable/ [@martin2011cutadapt]
 
-`fastq_pair` : outputs only sequencing reads that have a matched paired end read. https://github.com/linsalrob/fastq-pair 
+`fastq_pair` : outputs only sequencing reads that have a matched paired end read. https://github.com/linsalrob/fastq-pair [@edwards2019fastq]
 
-`FLASH` : merges paired end reads by detecting overlapping sequence. https://ccb.jhu.edu/software/FLASH/ 
+`FLASH` : merges paired end reads by detecting overlapping sequence. https://ccb.jhu.edu/software/FLASH/ [@magovc2011flash] 
 
-`fqdedup` : removes duplicated sequences from FASTQ files. https://github.com/guertinlab/fqdedup
+`fqdedup` : removes duplicated sequences from FASTQ files. https://github.com/guertinlab/fqdedup [@martins2018fqdedup]
 
-`samtools` : a suite of tools for parsing and interfacing with high throughput sequencing data files. http://www.htslib.org
+`samtools` : a suite of tools for parsing and interfacing with high throughput sequencing data files. http://www.htslib.org [@li2009sequence]
 
-`seqOutBias` : software that parses files and outputs desired formats with the option to correct enzymatic sequence biases. https://github.com/guertinlab/seqOutBias
+`seqOutBias` : software that parses files and outputs desired formats with the option to correct enzymatic sequence biases. https://github.com/guertinlab/seqOutBias [@martins2018universal]
 
-`seqtk` : a multifunctional toolkit for processing sequence files, including trimming a defined number of bases from the ends of reads and reverse complementing sequencing reads. https://github.com/lh3/seqtk
+`seqtk` : a multifunctional toolkit for processing sequence files, including trimming a defined number of bases from the ends of reads and reverse complementing sequencing reads. https://github.com/lh3/seqtk [@li2013seqtk]
 
 `wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
 
 `R` packages:
 
-`lattice`: graphics plotting package.  https://cran.r-project.org/web/packages/lattice/lattice.pdf
+`lattice`: graphics plotting package.  https://cran.r-project.org/web/packages/lattice/lattice.pdf [@sarkar2008lattice]
 
-`DESeq2`: statistical package for quantifying differences in counts-based genomics data. https://bioconductor.org/packages/release/bioc/html/DESeq2.html
+`DESeq2`: statistical package for quantifying differences in counts-based genomics data. https://bioconductor.org/packages/release/bioc/html/DESeq2.html [@love2014moderated]
 
 In addition, we developed the following software and R scripts to facilitate data analysis and graphical output. Below, we use `wget` to retrieve the software and scripts. The command `chmod +x` changes the permissions of the files to executable. 
 
