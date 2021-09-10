@@ -227,8 +227,10 @@ This value varies widely depending upon whether a size selection was performed i
 Each quality control metric is distilled down to a single number that is printed to the file `${name}_QC_metrics.txt`. Alongside the value, we include the recommended threshold. We continue to print all metrics to this file and plot the data at the end of the workflow.
 \scriptsize
 ```bash
-cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
-cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
+cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq \
+    -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
+cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq \
+    -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
 
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 PE1_w_Adapter=$(wc -l ${name}_PE1_short.fastq | awk '{print $1/4}')
@@ -261,7 +263,8 @@ fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output with `insert_size.R`. We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries [@smith2021peppro]. RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library. Note that size selection to remove adapter/adapter ligation products will inflate this value because small RNAs are inevitably selected against when trying to remove only the adapter ligation band.    
 \scriptsize
 ```bash
-flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
+flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq \
+    ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 insert_size.R ${name}.hist ${UMI_length}
 
 rm ${name}_PE*_noadap.fastq.paired.fq
@@ -281,7 +284,8 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 By first aligning to the rDNA, we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally less than 10% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed. The `-f 0x4` flag of the `samtools fastq` command specifies that only unmapped reads should be included in the FASTQ output.    
 \scriptsize
 ```bash
-bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
+bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
+    samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
 
 #this removes PE2-aligned reads with a rDNA-aligned mate
 reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
@@ -292,7 +296,9 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 The last processing step for individual libraries is to align to the genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sorts the reads. 
 \scriptsize
 ```bash
-bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | samtools sort - -o ${name}.bam
+bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
+    -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | \
+    samtools sort - -o ${name}.bam
 ```
 \normalsize
 ## rDNA alignment rate
@@ -370,8 +376,10 @@ samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
 samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
 samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
     
-seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed \
+    --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed \
+    --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
 
 cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
 ```
@@ -382,13 +390,21 @@ cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1
 RNA polymerases that are associated with gene bodies efficiently incorporate nucleotides during the run on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run on efficiently [@rougvie1988rna; @core2012defining]. Therefore, the pause index is used to quantify run on efficiency. Pause index is the density of signal in the promoter-proximal pause region divided by density in the gene body. However, since pause windows are user-defined and variable, pause indices can differ substantially between metrics. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be artificially deflated. Here, we define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene.   
 \scriptsize
 ```bash
-coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
+coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_PE1_signal.bed \
+    -g $chrom_order_file | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
 #discard anything with chr and strand inconsistencies
-join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
+join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
+    awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | \
+    awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' | \
+    awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | \
+    sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
 
 #column ten is Pause index
-coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
+coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed \
+    -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+    awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
+    awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
 
 pause_index.R ${name}_pause_body.bed
 ```
@@ -398,9 +414,13 @@ normalsize
 RNA-seq primarily measures mature transcripts, so exons density far exceeds intron density. However, these densities are comparable within gene bodies for nascent RNA-seq. For calculation of this metric, the first exon is excluded because pausing occurs in this region and artifically inflates the exon density. Calculating the exon density to intron density ratio complements rDNA alignment rate as a metric to quantify nascent RNA purity. 
 \scriptsize
 ```bash
-coverageBed -sorted -counts -s -a $annotation_prefix.introns.bed -b ${name}_PE1_signal.bed -g $chrom_order_file  | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
+coverageBed -sorted -counts -s -a $annotation_prefix.introns.bed \
+    -b ${name}_PE1_signal.bed -g $chrom_order_file  | awk '$7>0' | \
+    awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
-coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
+coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed \
+    -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+    awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
 
 exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 ```
@@ -457,8 +477,12 @@ do
     echo 'unzipping raw' $name 'files'
     gunzip ${name}_PE*.fastq.gz
     echo 'removing dual adapter ligations and calculating the fraction of adapter/adapters in' $name
-    cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
-    cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
+    cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 \
+        -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq \
+        --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
+    cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 \
+        -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq \
+        --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
     PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
     PE1_w_Adapter=$(wc -l ${name}_PE1_short.fastq | awk '{print $1/4}')
     AAligation=$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)
@@ -471,17 +495,21 @@ do
     PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
     fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
     echo 'calculating and plotting RNA insert sizes from' $name
-    flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq ${name}_PE2_noadap.fastq.paired.fq -o ${name}
+    flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq \
+        ${name}_PE2_noadap.fastq.paired.fq -o ${name}
     insert_size.R ${name}.hist ${UMI_length}
     echo 'trimming off the UMI from' $name
     seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq > ${name}_PE1_processed.fastq
     seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to rDNA and removing aligned reads'
-    bowtie2 -p $cores -x $prealign_rdna -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
+    bowtie2 -p $cores -x $prealign_rdna -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
+        samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
     reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to the genome'
-    bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | samtools sort - -o ${name}.bam
+    bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
+        -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | \
+        samtools view -b - | samtools sort - -o ${name}.bam
     PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
     PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
@@ -496,7 +524,8 @@ do
     echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
     echo 'plotting and calculating complexity for' $name
     fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
-    echo 'calculating and plotting theoretical sequencing depth to achieve a defined number of concordantly aligned reads for' $name
+    echo 'calculating and plotting theoretical sequencing depth' 
+    echo 'to achieve a defined number of concordantly aligned reads for' $name
     PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
     PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
     factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
@@ -509,17 +538,31 @@ do
     samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
     samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
     samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
-    seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-    seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+    seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed \
+        --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
+    seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed \
+        --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
     cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
     echo 'Calculating pause indices for' $name  
-    coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
-    join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
-    coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
+    coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_PE1_signal.bed \
+        -g $chrom_order_file | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
+    join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
+        awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | \
+        awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  \
+        awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | \
+        sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
+    coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed \
+        -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+        awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
+        awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
     pause_index.R ${name}_pause_body.bed
     echo 'Calculating exon density / intron density as a metric for nascent RNA purity for' $name
-    coverageBed -sorted -counts -s -a $annotation_prefix.introns.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
-    coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
+    coverageBed -sorted -counts -s -a $annotation_prefix.introns.bed \
+        -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+        awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
+    coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed \
+        -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+        awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
     exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
     #clean up intermediate files and gzip
     rm ${name}_PE1_short.fastq
@@ -573,7 +616,9 @@ for filename in *_PE1_signal.bed
 do
     name=$(echo $filename | awk -F"_PE1_signal.bed" '{print $1}')
     echo -e  "\t${name}" > ${name}_gene_counts.txt
-    coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed  -b $filename -g $chrom_order_file | awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
+    coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed \
+        -b $filename -g $chrom_order_file | \
+        awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
 done
 paste -d'\t' *_gene_counts.txt > Estrogen_treatment_PRO_gene_counts.txt
 
