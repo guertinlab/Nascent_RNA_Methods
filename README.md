@@ -180,7 +180,7 @@ We initialize six variables at the start:
 
 `$chrom_order_file`: a file with the FASTA reference entries of the genome ordered
 
-`$UMI_length`: length of the UMI on the 5´ end of the paired end 1 read.
+`$UMI_length`: length of the UMI on the 5 prime end of the paired end 1 read.
 
 `$read_size`: read length minus UMI length.
 
@@ -218,7 +218,7 @@ gunzip ${name}_PE*.fastq.gz
 \normalsize 
 ## Processing reads 
 
-The first processing step is to remove adapter sequence and simultaneously discard reads that have insert sizes of one base. The 3´ adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
+The first processing step is to remove adapter sequence and simultaneously discard reads that have insert sizes of one base. The 3 prime adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
 
 The fraction of reads that result from adapter/adapter ligation products is a useful metric to help determine the necessary read depth to achieve a certain aligned read depth. FASTQ files contain four lines per sequence entry, so we calculate this value by first counting the number of lines in the original FASTQ file using `wc -l` and divide that value by 4 using `awk '{print $1/4}'`. We perform the same operation on the output file of reads that were too short, in this case 0 or 1 base insertions. Finally we, divide the adapter/adapter ligation product value by the total and round to the hundredth with `$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)`.
 
@@ -238,13 +238,14 @@ echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
 echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 ```
 \normalsize
-The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand. This is necessary because the PRO-seq protocol sequences the 3´ end of the original nascent RNA as the paired end 1 read. 
+The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand. This is necessary because the PRO-seq protocol sequences the 3 prime end of the original nascent RNA as the paired end 1 read. 
 \scriptsize
 ```bash
 seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
 ```
 \normalsize
-PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused [@kwak2013precise] and the 5´end of the RNA is often the transcription start site. One cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end reads alignment. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. We effectively deduplicate the PE2 based on the presence of the PE1 UMI by pairing the PE1 and PE2 reads with `fastq_pair`. 
+PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused [@kwak2013precise] and the 5 prime
+end of the RNA is often the transcription start site. One cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end reads alignment. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. We effectively deduplicate the PE2 based on the presence of the PE1 UMI by pairing the PE1 and PE2 reads with `fastq_pair`. 
 \scriptsize
 ```bash
 fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
