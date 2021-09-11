@@ -513,14 +513,9 @@ do
     factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
     fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
     echo 'Separating paired end reads and creating genomic BED and bigWig intensity files for' $name
-    samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
-    samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
-    samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
-    seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed \
-        --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-    seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed \
-        --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-    cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_not_scaled_PE1.bed
+    seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
+        --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
+        --tail-edge --read-size=$read_size
     echo 'Calculating pause indices for' $name  
     coverageBed -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
         awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
