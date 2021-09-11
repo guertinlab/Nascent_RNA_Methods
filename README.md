@@ -372,7 +372,9 @@ First we extract all the paired end 1 reads and separate reads based on their al
 The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias in this workflow, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software splits paired end reads and outputs stranded bigWig files and a BED6 file. `SeqOutbias` also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigns the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
 \scriptsize
 ```bash
-seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired --tail-edge --read-size=$read_size
+seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
+    --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
+    --tail-edge --read-size=$read_size
 ```
 \normalsize
 
