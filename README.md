@@ -533,7 +533,7 @@ do
     coverageBed -counts -s -a $annotation_prefix.introns.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
-    coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed \
+    coverageBed -counts -s -a $annotation_prefix.no.first.exons.named.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
     exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
