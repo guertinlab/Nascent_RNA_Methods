@@ -369,19 +369,10 @@ reads is too high. The QC metrics should be considered to determine whether the 
 ## Get the reads in a BED
 First we extract all the paired end 1 reads and separate reads based on their alignment to the plus or minus strand.
 
-The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias in this workflow, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software outputs a bigWig and BED6 file with strand information, but it also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigns the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
+The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias in this workflow, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option to not correct sequence bias. The software splits paired end reads and outputs stranded bigWig files and a BED6 file. `SeqOutbias` also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigns the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files.
 \scriptsize
 ```bash
-samtools view -b -f 0x40 ${name}.bam > ${name}_PE1.bam
-samtools view -bh -F 0x14 ${name}_PE1.bam > ${name}_PE1_plus.bam
-samtools view -bh -f 0x10 ${name}_PE1.bam > ${name}_PE1_minus.bam
-    
-seqOutBias $genome ${name}_PE1_plus.bam --no-scale --bed ${name}_PE1_plus.bed \
-    --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed \
-    --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-
-cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
+seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired --tail-edge --read-size=$read_size
 ```
 \normalsize
 
