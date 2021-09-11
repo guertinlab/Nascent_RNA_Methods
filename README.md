@@ -381,7 +381,7 @@ seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive --b
 RNA polymerases that are associated with gene bodies efficiently incorporate nucleotides during the run on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run on efficiently [@rougvie1988rna; @core2012defining]. Therefore, the pause index is used to quantify run on efficiency. Pause index is the density of signal in the promoter-proximal pause region divided by density in the gene body. However, since pause windows are user-defined and variable, pause indices can differ substantially between metrics. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be artificially deflated. Here, we define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene.   
 \scriptsize
 ```bash
-coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_PE1_signal.bed \
+coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed \
     -g $chrom_order_file | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
 #discard anything with chr and strand inconsistencies
@@ -393,7 +393,7 @@ join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
 
 #column ten is Pause index
 coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed \
-    -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+    -b ${name}_not_scaled_PE1.bed -g $chrom_order_file | awk '$7>0' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
 
@@ -406,11 +406,11 @@ RNA-seq primarily measures mature transcripts, so exons density far exceeds intr
 \scriptsize
 ```bash
 coverageBed -sorted -counts -s -a $annotation_prefix.introns.bed \
-    -b ${name}_PE1_signal.bed -g $chrom_order_file  | awk '$7>0' | \
+    -b ${name}_not_scaled_PE1.bed -g $chrom_order_file  | awk '$7>0' | \
     awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
 coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed \
-    -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+    -b ${name}_not_scaled_PE1.bed -g $chrom_order_file | awk '$7>0' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
 
 exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
@@ -533,9 +533,9 @@ do
         --bw=${name}_PE1_plus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
     seqOutBias $genome ${name}_PE1_minus.bam --no-scale --bed ${name}_PE1_minus.bed \
         --bw=${name}_PE1_minus.bigWig --tail-edge --read-size=$read_size --stranded --bed-stranded-positive
-    cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_PE1_signal.bed
+    cat ${name}_PE1_plus.bed ${name}_PE1_minus.bed | sort -k1,1 -k2,2n > ${name}_not_scaled_PE1.bed
     echo 'Calculating pause indices for' $name  
-    coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_PE1_signal.bed \
+    coverageBed -sorted -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed \
         -g $chrom_order_file | awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
     join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
         awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | \
@@ -543,16 +543,16 @@ do
         awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | \
         sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
     coverageBed -sorted -counts -s -a ${name}_pause_counts_body_coordinates.bed \
-        -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+        -b ${name}_not_scaled_PE1.bed -g $chrom_order_file | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
     pause_index.R ${name}_pause_body.bed
     echo 'Calculating exon density / intron density as a metric for nascent RNA purity for' $name
     coverageBed -sorted -counts -s -a $annotation_prefix.introns.bed \
-        -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+        -b ${name}_not_scaled_PE1.bed -g $chrom_order_file | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
     coverageBed -sorted -counts -s -a $annotation_prefix.no.first.exons.named.bed \
-        -b ${name}_PE1_signal.bed -g $chrom_order_file | awk '$7>0' | \
+        -b ${name}_not_scaled_PE1.bed -g $chrom_order_file | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
     exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
     #clean up intermediate files and gzip
@@ -603,9 +603,9 @@ annotation_prefix=Homo_sapiens.GRCh38.104
 chrom_order_file=hg38.chrom.order.txt
 sort -k1,1 -k2,2n $annotation_prefix.bed > $annotation_prefix.sorted.bed 
 
-for filename in *_PE1_signal.bed
+for filename in *_not_scaled_PE1.bed
 do
-    name=$(echo $filename | awk -F"_PE1_signal.bed" '{print $1}')
+    name=$(echo $filename | awk -F"_not_scaled_PE1.bed" '{print $1}')
     echo -e  "\t${name}" > ${name}_gene_counts.txt
     coverageBed -sorted -counts -s -a $annotation_prefix.sorted.bed \
         -b $filename -g $chrom_order_file | \
