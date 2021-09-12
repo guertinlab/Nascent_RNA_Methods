@@ -319,7 +319,7 @@ echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
 
 We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates and a genome the size/gene density of the human genome. 
 
-For the first metrics, the input FASTQ file is preprocessed with adapter/adapter products and inserts less than 10 removed; the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged in `${name}_complexity.log`. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot. We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
+For the first metrics, the input FASTQ file is preprocessed with adapter/adapter products and inserts less than 10 removed; the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged in `${name}_complexity.log`. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot (Figure 2A). We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
 \scriptsize
 ```bash
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
@@ -350,7 +350,7 @@ fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
 ```
 \normalsize
 Counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
-reads is too high. The QC metrics should be considered to determine whether the library is high quality. If the library is deemed high quality and low sequencing depth, use this equation to determine the practicality of increasing depth using the same libraries.   
+reads is too high. The QC metrics should be considered to determine whether the library is high quality. If the library is deemed high quality and low sequencing depth, use the equation printed in the PDF output (Figure 2B) to determine the practicality of increasing depth using the same libraries.   
 
 
 ## Get the reads in a BED
@@ -599,7 +599,7 @@ differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DM
 \normalsize
 ## Conclusions
 
-Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you call _guidelines_ than actual rules.”
+Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
 
 
 # References
