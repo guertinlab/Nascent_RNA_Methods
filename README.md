@@ -303,10 +303,10 @@ total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))")
 
 #calculate the total that concordantly align to hg38 and/or rDNA
 concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-total_aligned=$(echo "$(($concordant_pe1+$total_rDNA))")
+total=$(echo "$(($concordant_pe1+$total_rDNA))")
 
 #rDNA alignment rate
-rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_aligned" | bc)
+rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total" | bc)
 
 echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
 ```
@@ -500,8 +500,8 @@ do
     total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
     echo 'calculating rDNA and genomic alignment rates for' $name
     concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-    total_aligned=$(echo "$(($concordant_pe1+$total_rDNA))")
-    rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_aligned" | bc)
+    total=$(echo "$(($concordant_pe1+$total_rDNA))")
+    rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total" | bc)
     echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
     map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
     pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
