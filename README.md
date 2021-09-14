@@ -158,31 +158,31 @@ subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${re
 
 ## Initialize variables
 
-The naming convention we recommend is the following: cellType_conditions_replicate_pairedend.fastq.gz. For example, a gzipped  paired end 1 (PE1) file from the second replicate of treating MCF7 cells with estrogen (E2) for 20 minutes would be: `MCF7_20minE2_rep2_PE1.fastq.gz`. Many of the lines of code assume this naming convention, especially with regards to the trailing `_PE1.fastq.gz` and `_PE2.fastq.gz`. 
+In order to automate the processing and naming of output files, we conform to a strict naming convention for the FASTQ files: cellType_conditions_replicate_pairedend.fastq.gz. For example, a gzipped paired end 1 (PE1) file from the first replicate of treating T47D cells with DMSO would be: `T47D_DMSO_rep1_PE1.fastq.gz`.
 
-We initialize six variables at the start:
+We first initialize six variables:
 
-`$directory`: location of the sequencing file
+`$directory`: location of the sequencing files
 
-`$filename`: name of the gzipped FASTQ file
+`$filename`: name of the gzipped paired end 1 FASTQ file.
 
-`$annotation_prefix`: Ensembl gene annotation GTF prefix; this is user-defined prefix above.
+`$annotation_prefix`: Ensembl gene annotation GTF prefix; this is the user-defined prefix from above.
 
-`$UMI_length`: length of the UMI on the 5 prime end of the paired end 1 read.
+`$UMI_length`: length of the UMI on the 5´ end of the paired end 1 read.
 
 `$read_size`: read length minus UMI length.
 
-`$cores`: number of cores for parallel processing
+`$cores`: number of cores for parallel processing.
 
-`$genome`: the genome FASTA file
+`$genome`: absolute or relative path to the genome FASTA file.
 
-`$genome_index`: the basename of the genome index files from `bowtie2-build`
+`$genome_index`: the basename (including the path) of the genome index files from `bowtie2-build`.
 
-`$prealign_rdna_index`: the basename of the prealign rDNA index files from `bowtie2-build`
+`$prealign_rdna_index`: the basename (including the path) of the prealign rDNA index files from `bowtie2-build`.
 \scriptsize
 ```bash
-directory=/Users/guertinlab/sequencing_run1 
-filename=T47D_Starved_DMSO_rep1_PE1.fastq.gz
+directory=/Users/genomicslab/sequencing_run1 
+filename=T47D_DMSO_rep1_PE1.fastq.gz
 annotation_prefix=Homo_sapiens.GRCh38.104 
 UMI_length=8
 read_size=62
@@ -194,7 +194,7 @@ prealign_rdna_index=human_rDNA
 \normalsize
 ## Preprocessing 
 
-Navigate to the folder that contains the sequencing file and gunzip the files.
+Navigate to the folder that contains the sequencing files, save the basename as a variable, and `gunzip` the files.
 \scriptsize
 ```bash
 cd $directory 
@@ -205,10 +205,11 @@ gunzip ${name}_PE*.fastq.gz
 \normalsize 
 ## Processing reads 
 
-Here we describe processing and analysis of paired end PRO-seq libraries with unique molecular identifiers. 
+Here we describe processing and analysis of paired end PRO-seq libraries with unique molecular identifiers ligated to the 3´ end of the nascent RNA. The user may need to modify or omit specific steps in order to accomodate their library preparation protocol.  
 
+The first processing step is to remove adapter sequences and simultaneously discard reads that have insert sizes of one base. The UMI effectively looks like an insert between the adapter sequences and if adapters ligate directly to one another, read lengths will be exactly the length of the UMI.
 
-The first processing step is to remove adapter sequence and simultaneously discard reads that have insert sizes of one base. The 3 prime adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
+The 3´ end of the adapter that ligates to the 5´ end of the RNA contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have  The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
 
 The fraction of reads that result from adapter/adapter ligation products is a useful metric to help determine the necessary read depth to achieve a certain aligned read depth. FASTQ files contain four lines per sequence entry, so we calculate this value by first counting the number of lines in the original FASTQ file using `wc -l` and divide that value by 4 using `awk '{print $1/4}'`. We perform the same operation on the output file of reads that were too short, in this case 0 or 1 base insertions. Finally we, divide the adapter/adapter ligation product value by the total and round to the hundredth with `$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)`.
 
