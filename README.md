@@ -311,15 +311,18 @@ rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total" | bc)
 echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
 ```
 \normalsize
+
 ## Mappability rate
-After all the processing, the vast majority of reads should map concordantly to the genome. Alignment rates for successful PRO-seq experiments are typically above 90%. Again, we count specific reads using `samtools` and by counts reads in FASTQ files, then calcuate alignment rate. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
+90 PERCENT STILL GOOD??
+
+The vast majority of reads should map concordantly to the genome. Alignment rates for successful PRO-seq experiments are typically above 90%. Again, we count specific reads using `samtools` and by counts reads in FASTQ files, then calcuate alignment rate. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
 \scriptsize
 ```bash
-map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
+map_pe1=$(samtools view -c -f 0x42 ${name}.bam)
 pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
 alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
 
-echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
+echo -e "$alignment_rate\t$name\t0.85\tAlignment Rate" >> ${name}_QC_metrics.txt
 ```
 \normalsize
 ## Complexity and theoretical read depth
@@ -503,10 +506,10 @@ do
     total=$(echo "$(($concordant_pe1+$total_rDNA))")
     rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total" | bc)
     echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
-    map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
+    map_pe1=$(samtools view -c -f 0x42 ${name}.bam)
     pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
     alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
-    echo -e "$alignment_rate\t$name\t0.90\tAlignment Rate" >> ${name}_QC_metrics.txt
+    echo -e "$alignment_rate\t$name\t0.85\tAlignment Rate" >> ${name}_QC_metrics.txt
     echo 'plotting and calculating complexity for' $name
     fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
     echo 'calculating and plotting theoretical sequencing depth' 
