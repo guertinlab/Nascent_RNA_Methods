@@ -10,7 +10,7 @@ author:
 
 # Abstract
 
-Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here we deconstruct a recently published genomic nascent RNA processing pipeline (PEPPRO) into its components and link the analyses to the underlying molecular biology. PRO-seq experiments are evolving and variations can be found throughout the literature. The analyses are presented as individual code chunks with comprehensive details so that users can modify the framework to accommodate different protocols. We present the framework to quantify the following quality control metrics: library complexity, nascent RNA purity, nuclear run on efficiency, alignment rate, sequencing depth, and RNA integrity.        
+Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here we deconstruct a recently published genomic nascent RNA processing pipeline (PEPPRO) into its components and link the analyses to the underlying molecular biology. PRO-seq experiments are evolving and variations can be found throughout the literature. The analyses are presented as individual code chunks with comprehensive details so that users can modify the framework to accommodate different protocols. We present the framework to quantify the following quality control metrics: library complexity, nascent RNA purity, nuclear run-on efficiency, alignment rate, sequencing depth, and RNA integrity.        
 
 
 # Introduction
@@ -230,26 +230,28 @@ echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
 echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 ```
 \normalsize
-The next step removes reads with a length shorter than 10 bases and reverse complements the file so that the aligned read corresponds to the appropriate reference genome strand. This is necessary because the PRO-seq protocol sequences the 3 prime end of the original nascent RNA as the paired end 1 read. 
+The next step reverse complements the sequences to correspond to the appropriate strand of the reference genome and removes reads that are shorter than 10 bases. 
 \scriptsize
 ```bash
 seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
 ```
 \normalsize
-PRO-seq can have several independent reads that have the same genomic ends because promoter proximal pausing positions can be focused [@kwak2013precise] and the 5´ end of the RNA is often the transcription start site. One cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end reads alignment. Therefore, we remove duplicate sequences from the FASTQ file based on the presence of the UMI. We effectively deduplicate the PE2 based on the presence of the PE1 UMI by pairing the PE1 and PE2 reads with `fastq_pair`. 
+A proportion of short nascent RNAs from different cells are identical because their 5´ end corresponds to a transcription start site, and their 3´ end is located within a focused promoter-proximal pause region [@kwak2013precise]. Therefore, we cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end read alignments. We rely on the presence of the UMI to remove PCR duplicates from the PE1 FASTQ file. We use `fastq_pair` to deduplicate the PE2 read by pairing with the deduplicated PE1 file. 
 \scriptsize
 ```bash
+#remove PCR duplicates
 fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
 
 #this variable is a near-optimal table size value for fastq_pair: 
 PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
 
+#pair FASTQ files
 fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
 ```
 \normalsize
-## RNA integrity score
+## RNA degradation ratio score
 
-We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output with `insert_size.R` (Figure 1). We empirically found that there are fewer reads within the range of 10 - 20 than the range of 30 - 40 for high quality libraries [@smith2021peppro]. RNA only starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run on. Libraries with a substantial amount of degradation after the run on step are enriched for species in the range 10 - 20. A degradation ratio of less than 1 indicates a high quality library. Note that size selection to remove adapter/adapter ligation products will inflate this value because small RNAs are inevitably selected against when trying to remove only the adapter ligation band.    
+An abundance of short inserts within a library indicates that RNA degradation occurred. We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output with `insert_size.R` (Figure 1). RNA starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run-on. Libraries with a substantial amount of degradation after the run-on step are enriched for species in the range 10 - 20. We empirically found that there are fewer reads within the range of 10 - 20 than within the range of 30 - 40 for high quality libraries [@smith2021peppro]. A degradation ratio of less than 1 indicates a high quality library. This metric becomes unreliable if the protocol includes size selection to remove adapter/adapter ligation products. Size selection inevitably removes some small RNAs and inflates this ratio.
 \scriptsize
 ```bash
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq \
@@ -270,7 +272,7 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 \normalsize
 ## Remove reads aligning to rDNA
   
-By first aligning to the rDNA, we can later estimate nascent RNA purity and avoid spurious read pile ups at region in the genome that non-uniquely align to both the rDNA locus and elsewhere in the genome. While between 70 - 80% of stable RNA is rRNA, generally less than 10% of the nascent RNA arises from rRNA. Even 10% of the library aligning to rDNA loci is extremely enriched, so any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in huge artifactual spikes in the data if rDNA-aligned reads are not first removed. The `-f 0x4` flag of the `samtools fastq` command specifies that only unmapped reads should be included in the FASTQ output.    
+While between 70 - 80% of stable RNA is rRNA, generally less than 10% of the nascent RNA arises from rRNA. By first aligning to the rDNA, we can later estimate nascent RNA purity. Any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in artifactual spikes at regions in the genome that share homology with the rDNA locus. Before aligning to the genome, we first align reads to rDNA and use `samtools fastq` and the `-f 0x4` flag to specify that only unmapped reads are included in the FASTQ output.    
 \scriptsize
 ```bash
 bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
@@ -282,7 +284,7 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 ```
 \normalsize
 ## Genome alignment
-The last processing step for individual libraries is to align to the genome. Note that we reverse complemented both reads, so the `--rf` flag indicates that the reads are oriented opposite to typical RNA-seq data. The `samtools` commands convert the file to a compressed binary BAM format and sorts the reads. 
+The last processing step for individual libraries is to align to the genome. We invoke the `--rf` flag to account for the fact that we reverse complemented both reads. The `samtools` commands convert the file to a compressed binary BAM format and sort the reads. 
 \scriptsize
 ```bash
 bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
@@ -291,17 +293,20 @@ bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.
 ```
 \normalsize
 ## rDNA alignment rate
-In order to calculate the rDNA alignment rate, we count the number of reads before and after removing rDNA aligned reads; their difference is the total number of rDNA-aligned reads. The command `samtools view -c -f 0x42` counts the concordant hg38-aligned paired end 1 reads. Lastly, we calculate the fraction of aligned reads that map to the rDNA genome and print it to the QC metrics file.    
+In order to calculate the rDNA alignment rate, we first count the total number of rDNA-aligned reads. Next, we use `samtools view -c -f 0x42` to count the PE1 reads that concordantly align to hg38 and not to rDNA. Lastly, we calculate the fraction of aligned reads that map to the rDNA locus and print it to the QC metrics file.    
 \scriptsize
 ```bash
+#calculate the total number of rDNA-aligned reads
 PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
 PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
 total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
 
+#calculate the total that concordantly align to hg38 and/or rDNA
 concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-total_concordant=$(echo "$(($concordant_pe1+$total_rDNA))")
+total_aligned=$(echo "$(($concordant_pe1+$total_rDNA))")
 
-rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_concordant" | bc)
+#rDNA alignment rate
+rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_aligned" | bc)
 
 echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
 ```
@@ -367,9 +372,9 @@ seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
 ```
 \normalsize
 
-## Run on efficiency
+## Run-on efficiency
 
-RNA polymerases that are associated with gene bodies efficiently incorporate nucleotides during the run on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run on efficiently [@rougvie1988rna; @core2012defining]. Therefore, the pause index is used to quantify run on efficiency. Pause index is the density of signal in the promoter-proximal pause region divided by density in the gene body. However, since pause windows are user-defined and variable, pause indices can differ substantially between metrics. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be artificially deflated. Here, we define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene. The distribution of log<sub>10</sub> pause index values and median pause index value are output as a PDF file (Figure 3).      
+RNA polymerases that are associated with gene bodies efficiently incorporate nucleotides during the run-on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run-on efficiently [@rougvie1988rna; @core2012defining]. Therefore, the pause index is used to quantify run-on efficiency. Pause index is the density of signal in the promoter-proximal pause region divided by density in the gene body. However, since pause windows are user-defined and variable, pause indices can differ substantially between metrics. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be artificially deflated. Here, we define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene. The distribution of log<sub>10</sub> pause index values and median pause index value are output as a PDF file (Figure 3).      
 \scriptsize
 ```bash
 coverageBed -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
@@ -495,8 +500,8 @@ do
     total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
     echo 'calculating rDNA and genomic alignment rates for' $name
     concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
-    total_concordant=$(echo "$(($concordant_pe1+$total_rDNA))")
-    rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_concordant" | bc)
+    total_aligned=$(echo "$(($concordant_pe1+$total_rDNA))")
+    rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total_aligned" | bc)
     echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
     map_pe1=$(samtools view -c -f 0x40 -F 0x4 ${name}.bam)
     pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
