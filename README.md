@@ -326,10 +326,13 @@ echo -e "$alignment_rate\t$name\t0.85\tAlignment Rate" >> ${name}_QC_metrics.txt
 ```
 \normalsize
 ## Complexity and theoretical read depth
+The proportion of PCR duplicates in the library will affect how much additional sequencing is require to achieve a target number of concordantly aligned reads. We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity, and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The proportion of reads that are PCR duplicates is related to read depth. At very low read depth nearly all reads are unique and you asymptotically approach the actual PCR duplicate rate at very high read depth. We calculate PCR duplicate rate using the FASTQ file with adapter/adapter products and small inserts removed. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. We print the the input and deduplicated counts to the `${name}_complexity.log` file. The R code fits an asymptotic regression model to the data. Finally we, plot the data and the model and print the total number of unique reads at a read depth of 10 million (Figure 2A). We recommend that at least 7.5 million reads of 10 million are unique (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
 
-We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity; and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The equation accounts for all upstream processing steps. Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates and a genome the size/gene density of the human genome. 
+The equation accounts for all upstream processing steps. 
 
-For the first metrics, the input FASTQ file is preprocessed with adapter/adapter products and inserts less than 10 removed; the UMI is still included in the FASTQ DNA sequence. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. The input and output numbers are logged in `${name}_complexity.log`. An asymptotic regression model is fit to the data and the total number of unique reads at 10 million read depth is printed on the resulting PDF plot (Figure 2A). We recommend that at least 7.5 million reads are unique at a depth of 10 million (i.e. 75% of reads are unique if you were to align exactly 10 million reads).
+Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates and a genome the size/gene density of the human genome. 
+
+
 \scriptsize
 ```bash
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
