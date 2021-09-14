@@ -330,7 +330,7 @@ The proportion of PCR duplicates in the library will affect how much additional 
 
 The equation accounts for all upstream processing steps. 
 
-Over 10 milion concordantly aligned reads is typically sufficient if you have 3 or more replicates and a genome the size/gene density of the human genome. 
+Over 10 milion concordantly aligned reads is sufficient for differential expression if you have 3 or more replicates and a genome the size/gene density of the human genome; higher sequencing depth is required for regulatory element identification or using data drivenapproaches to define gene annotations.  
 
 
 \scriptsize
