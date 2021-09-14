@@ -15,8 +15,7 @@ Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleot
 
 # Introduction
 
-Genomic nascent RNA profiling assays, such as precision genomic run-on (PRO-seq) [@kwak2013precise], quantify the precise position and direction of transcriptionally engaged RNA polymerases. Quantifying nascent RNA complements conventional RNA-seq by directly measuring active transcription. Steady-state RNA levels are influenced by RNA stability, so we can leverage the discordance between RNA-seq and PRO-seq expression to estimate genome-wide RNA half-lives [@blumberg2021characterizing]. Bidirectional transcripts are a hallmark of enhancers and promoters. We can detect these short and unstable transcripts with PRO-seq to directly infer regulatory element activity as an orthogonal approach to chromatin accessibility assays [@wang2019identification; @scruggs2015bidirectional]. Additionally, PRO-seq sensitively detects immediate changes in transcription without the need for mature RNAs to accumulate or degrade. Lastly, nascent RNA profiling determines RNA polymerase density within all genomic features, such as promoter-proximal regions, gene bodies, and enhancers. Changes in RNA polymerase distribution within these regions can inform on how various treatments and stimuli regulate steps in the transcription cycle [@sathyan2019improved; @danko2013signaling; @hah2011rapid]. New genomic nascent RNA-seq methodologies [@schwalb2016tt; @scruggs2015bidirectional; @churchman2011nascent; @muhar2018slam; @mayer2015native] necessitate flexible analysis workflows and standardized quality control metrics [@smith2021peppro]. Here we describe processing and analysis of paired end PRO-seq libraries with unique molecular identifiers. We present the workflow as deconstructed code that can be adapted to fit a diversity of protocols and experimental details. 
-
+Genomic nascent RNA profiling assays, such as precision genomic run-on (PRO-seq) [@kwak2013precise], quantify the precise position and direction of transcriptionally engaged RNA polymerases. Quantifying nascent RNA complements conventional RNA-seq by directly measuring active transcription. Steady-state RNA levels are influenced by RNA stability, so we can leverage the discordance between RNA-seq and PRO-seq expression to estimate genome-wide RNA half-lives [@blumberg2021characterizing]. Bidirectional transcripts are a hallmark of enhancers and promoters. We can detect these short and unstable transcripts with PRO-seq to directly infer regulatory element activity as an orthogonal approach to chromatin accessibility assays [@wang2019identification; @scruggs2015bidirectional]. Similarly to regulatory elements, gene isoforms can vary between cell types and conditions. We can use RNA-seq to define splice variants and PRO-seq to identify differing primary transcript boundaries [@anderson2020defining] and transcription start sites [@zhao2021deconvolution]. Additionally, PRO-seq sensitively detects immediate changes in transcription without the need for mature RNAs to accumulate or degrade. Lastly, nascent RNA profiling determines RNA polymerase density within all genomic features, such as promoter-proximal regions, gene bodies, and enhancers [@core2012defining; @duarte2016transcription; @sathyan2019improved]. Changes in RNA polymerase distribution within these regions can inform on how various treatments and stimuli regulate steps in the transcription cycle [@sathyan2019improved; @danko2013signaling; @hah2011rapid]. Here, we describe quality control metrics that are used to determine if PRO-seq libraries are worth proceeding with these or other downstream analyses. New genomic nascent RNA-seq methodologies [@schwalb2016tt; @scruggs2015bidirectional; @churchman2011nascent; @muhar2018slam; @mayer2015native] necessitate flexible analysis workflows and standardized quality control metrics [@smith2021peppro]. We present the workflow as deconstructed code that can be adapted to fit a diversity of protocols and experimental details. 
 
 # One time software installations, downloads, and processing steps
 
@@ -94,7 +93,7 @@ bowtie2-build human_rDNA.fa human_rDNA
 
 ## Reference gene annotation
 
-The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl [@yates2020ensembl]. The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations. These coordinates include all annotated transcription start sites that correspond to different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name for downstream compatibility with the reference genome chromosome names. The output is then piped to `awk`, which prints the following fields: chromosome coordinates in columns 1-3, Ensembl transcript ID (ENST), gene name, and strand.  Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" replacing "chrMT". Finally the exon output is sorted by the first column (chromosome), then the second column (starting position), in ascending order. The gene annotations are processed similarly, except the Ensembl gene ID (ENSG) replaces ENST in column 4 and the file is sorted by the fifth column (gene name).        
+The quality control metrics outlined herein require the counting of sequence reads that align to three genomic features: exons, intron, and promoter-proximal pause regions. Gene annotations are available from many sources and we outline retrieval and parsing of GTF files from Ensembl [@yates2020ensembl]. The Ensembl website (http://www.ensembl.org/index.html) contains the information for the latest release, which at the time of writing this manuscript is release 104 for hg38. After retrieving and unzipping the file we parse out all exon 1 annotations. These coordinates include all annotated transcription start sites that correspond to different gene isoforms. Ensembl chromosome numbers do not include the preceding "chr", so the first `sed` command appends "chr" to the chromosome name for downstream compatibility with the reference genome chromosome names. The output is then piped to `awk`, which prints the following fields: chromosome coordinates in columns 1-3, Ensembl transcript ID (ENST), gene name, and strand.  Subsequent `sed` commands drop the semicolon and quote characters from the gene and Ensembl IDs while editing the mitochondrial chromosome to match the reference genome, "chrM" replacing "chrMT". Finally we sort the exon output by the first column (chromosome), then the second column (starting position), in ascending order. The gene annotations are processed similarly, except the Ensembl gene ID (ENSG) replaces ENST in column 4 and we sort the file by the fifth column (gene name).        
 \scriptsize
 ```bash
 release=104
@@ -107,24 +106,27 @@ grep 'exon_number "1"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.tss.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.tss.bed
 
 #extract all exons
 grep 'exon_number' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$14,$20,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.bed
 
 #extract all complete gene annotations
 awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$10,$14,$7}' | \
     sed 's/";//g' | \
-    sed 's/"//g' | sed 's/chrMT/chrM/g' | sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | \
+    sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
 ```
 \normalsize
-The goal of the following operations is to output a set of exons that excludes all instances of first exons, output all introns, and output a set of all potential pause regions for a gene by taking the region for 20 - 120 downstream of all exon 1 annotations. The `mergeBed` command collapses all overlapping intervals and the gene name information is lost. We exclude all first exon coordinates with `subtractBed`, then `intersectBed` reassigns gene names to all remaining exons. The final `awk` command defines a 100 base pause region window downstream of all transcription start sites based on the gene strand.    
+The following operations output: 1) a set of exons that excludes all instances of first exons, 2) all potential pause regions for each gene, and 3) all introns.  We define pause regions as the intervals 20 - 120 bases downstream of all exon 1 annotations. First, `mergeBed` collapses all overlapping exon intervals. We use `subtractBed` to exclude all first exon coordinates from the merged exon file. Since `mergeBed` drops the gene name, we use `intersectBed` to reassign gene names to all remaining exons. The `awk` command defines the 100 base pause region window downstream of all transcription start sites based on the gene strand. Lastly, we subtract the exons from the full gene coordinates to produce the intron annotations.     
 \scriptsize
 ```bash
 #merge exon intervals that overlap each other
@@ -136,10 +138,6 @@ mergeBed -s -c 6 -o distinct -i Homo_sapiens.GRCh38.${release}.all.exons.bed | \
 subtractBed -s -a Homo_sapiens.GRCh38.${release}.all.exons.merged.bed -b Homo_sapiens.GRCh38.${release}.tss.bed | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.no.first.exons.bed
 
-#define and name all introns 
-subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.merged.bed | \
-    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.introns.bed 
-
 #extract gene names of exons
 intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo_sapiens.GRCh38.${release}.bed | \
     awk '{OFS="\t";} {print $1,$2,$3,$11,$4,$4}' | \
@@ -149,12 +147,14 @@ intersectBed -s -wb -a Homo_sapiens.GRCh38.${release}.no.first.exons.bed -b Homo
 awk  '{OFS="\t";} $6 == "+" {print $1,$2+20,$2 + 120,$4,$5,$6} \
     $6 == "-" {print $1,$3 - 120,$3 - 20,$4,$5,$6}' Homo_sapiens.GRCh38.${release}.tss.bed  | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.pause.bed 
+
+#define and name all introns 
+subtractBed -s -a Homo_sapiens.GRCh38.${release}.bed -b Homo_sapiens.GRCh38.${release}.all.exons.merged.bed | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.introns.bed 
 ```
 
 \normalsize 
 # Processing PRO-seq data
-
-PRO-seq data can be analyzed in many sophisticated ways, including defining primary transcripts [@anderson2020defining], identifying putative enhancers [@wang2019identification], detecting prominent transcription start sites [@zhao2021deconvolution], or quantifying changes in RNA Polymerase density in different genic features [@core2012defining; @duarte2016transcription; @sathyan2019improved]. Here, we only describe quality control metrics that are used to determine if a PRO-seq library is worth analyzing in depth. 
 
 ## Initialize variables
 
@@ -204,6 +204,9 @@ gunzip ${name}_PE*.fastq.gz
 ```
 \normalsize 
 ## Processing reads 
+
+Here we describe processing and analysis of paired end PRO-seq libraries with unique molecular identifiers. 
+
 
 The first processing step is to remove adapter sequence and simultaneously discard reads that have insert sizes of one base. The 3 prime adapter contains a UMI, which is sequenced prior to the adapter. Therefore, the vast majority of adapter/adapter ligation products have read lengths of exactly the length of the UMI. The option `-m $((UMI_length+2))` provides a one base buffer and discards reads with a length of the UMI + 1.
 
