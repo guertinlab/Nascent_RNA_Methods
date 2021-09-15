@@ -325,22 +325,27 @@ echo -e "$alignment_rate\t$name\t0.80\tAlignment Rate" >> ${name}_QC_metrics.txt
 ## Complexity and theoretical read depth
 The proportion of PCR duplicates in a library affects how many additional raw sequencing reads are required to achieve a target number of concordantly aligned reads. We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity, and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The proportion of reads that are PCR duplicates is related to read depth. At very low read depth nearly all reads are unique; at very high read depth the observed fraction of duplicates approaches the true PCR duplicate rate of the library. We calculate the PCR duplicate rate using the processed FASTQ file without adapter/adapter ligation products or small inserts. The FASTQ file is randomly subsampled to read depths of 10%, 20%, 30%,...,100%, and the intermediate files are deduplicated. We print the total and deduplicated counts for each subsample to the `${name}_complexity.log` file. The R script fits an asymptotic regression model and plots the model and data (Figure 2A). We recommend that at least 75% of reads are unique at a read depth of 10 million. 
 
-
 \scriptsize
 ```bash
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
 \normalsize
-We recommend three replicates and over 10 million concordantly aligned reads per replicate as a target for differential expression for a genome that is the size/gene density of the human genome. Higher sequencing depth is required for regulatory element identification or to use data driven approaches to define gene annotations. Processing steps upstream of deduplication, such as removing adapter/adapter reads, also reduce the number of informative reads and are considered in determining the theoretical raw read depth that is required to achieve a target number of aligned reads. We need two factors to derieve the constants to calculate the raw read depth that results in a specified target depth. First, we divide the total raw paired end 1 reads by processed paired end 1 reads that have adapter contamination and inserts less than 10 bases removed: `$factorX`. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome: `$factorY`.  
+
+Sequencing depth requirements vary depending upon downstream applications and the size/gene density of the genome. We recommend three replicates and over 10 million concordantly aligned reads per replicate for differential expression analysis with human cells. Data driven approaches to define gene annotations or  identify regulatory elements require higher sequencing depth. We need two factors to calculate the raw read depth necessary to achieve a specified target condordantly aligned depth. The first value is the fraction of raw PE1 reads that do not contain adapter/adapter ligation products or small inserts: `$factorX`. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome: `$factorY`.  
+
+
+Processing steps upstream of deduplication, such as removing adapter/adapter reads, also reduce the number of informative reads and are considered in determining the theoretical raw read depth that is required to achieve a target number of aligned reads.
+
+
 \scriptsize
 ```bash
 PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
 PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
 
-factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
+factorX=$(echo "scale=2 ; $PE1_noadap_trimmed / $PE1_total" | bc)
 
 echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
-echo $factorX | awk '{print 1/$1}'
+echo $factorX 
 
 #calculate PE1 deduplicated reads
 PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
@@ -513,7 +518,7 @@ do
     echo 'to achieve a defined number of concordantly aligned reads for' $name
     PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
     PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
-    factorX=$(echo "scale=2 ; $PE1_total / $PE1_noadap_trimmed" | bc)
+    factorX=$(echo "scale=2 ; $PE1_noadap_trimmed / $PE1_total" | bc)
     echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
     echo $factorX | awk '{print 1/$1}'
     PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
