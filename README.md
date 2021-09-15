@@ -257,8 +257,6 @@ An abundance of short inserts within a library indicates that RNA degradation oc
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq \
     ${name}_PE2_noadap.fastq.paired.fq -o ${name}
 insert_size.R ${name}.hist ${UMI_length}
-
-rm ${name}_PE*_noadap.fastq.paired.fq
 ```
 \normalsize
 ## Processing for alignment
@@ -425,6 +423,8 @@ rm ${name}_PE1_noadap_trimmed.fastq
 rm ${name}_PE1_dedup.fastq
 rm ${name}_PE1_processed.fastq
 rm ${name}_PE2_processed.fastq
+rm ${name}_PE1_noadap.fastq.paired.fq
+rm ${name}_PE2_noadap.fastq.paired.fq
 rm ${name}_PE1.rDNA.fastq.paired.fq
 rm ${name}_PE1.rDNA.fastq.single.fq
 rm ${name}_PE2_processed.fastq.paired.fq
