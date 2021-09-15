@@ -520,7 +520,7 @@ do
     PE1_noadap_trimmed=$(wc -l ${name}_PE1_noadap_trimmed.fastq | awk '{print $1/4}')
     factorX=$(echo "scale=2 ; $PE1_noadap_trimmed / $PE1_total" | bc)
     echo fraction of reads that are not adapter/adapter ligation products or below 10 base inserts
-    echo $factorX | awk '{print 1/$1}'
+    echo $factorX 
     PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
     factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
     fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
