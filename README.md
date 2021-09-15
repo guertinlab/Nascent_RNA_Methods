@@ -126,7 +126,9 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
 ```
 \normalsize
-The following operations output: 1) a set of exons that excludes all instances of first exons, 2) all potential pause regions for each gene, and 3) all introns.  We define pause regions as the intervals 20 - 120 bases downstream of all exon 1 annotations. First, `mergeBed` collapses all overlapping exon intervals. We use `subtractBed` to exclude all first exon coordinates from the merged exon file. Since `mergeBed` drops the gene name, we use `intersectBed` to reassign gene names to all remaining exons. The `awk` command defines the 100 base pause region window downstream of all transcription start sites based on the gene strand. Lastly, we subtract the exons from the full gene coordinates to produce the intron annotations.     
+The following operations output: 1) a set of exons that excludes all instances of first exons, 2) all potential pause regions for each gene, and 3) all introns.   There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the most prominently transcribed isoform. We define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene. 
+
+In order to define these windows, we use `mergeBed` to collapse all overlapping exon intervals and then `subtractBed` to exclude all first exon coordinates from the merged exon file. Since `mergeBed` drops the gene name, we use `intersectBed` to reassign gene names to all remaining exons. The `awk` command defines the 100 base pause region window downstream of all transcription start sites based on the gene strand. Lastly, we subtract the exons from the full gene coordinates to produce the intron annotations.     
 \scriptsize
 ```bash
 #merge exon intervals that overlap each other
@@ -354,22 +356,22 @@ fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
 ```
 \normalsize
 
-## Convert genomic PRO-seq signal into the BED6 format
-
-The software `seqOutBias` was originally developed to correct sequence bias from molecular genomics data. Although we are not correcting enzymatic sequence bias in this workflow, there are many features of `seqOutBias` that are useful. Note that we include the `--no-scale` option exclude bias correction. The software splits paired end reads and outputs stranded bigWig files and a BED6 file. `SeqOutbias` also calculates mappability at the specified read length and excludes non-uniquely mappable reads. Lastly, invoking `--tail-edge` realigns the end of the read so that the exact position of RNA Polymerase is specified in the output BED and bigWig files. The `--out-split-pairends` flag separates all the paired end reads and `--stranded` prints strand information in column 6.
-\scriptsize
-```bash
-seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
-    --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
-    --tail-edge --read-size=$read_size
-```
-\normalsize
 
 ## Run-on efficiency
 
-RNA polymerases that are associated with gene bodies efficiently incorporate nucleotides during the run-on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run-on efficiently [@rougvie1988rna; @core2012defining]. Therefore, the pause index, or the density of signal in the promoter-proximal pause region divided by density in the gene body, is an indirect measure of run-on efficiency. However, since pause windows are user-defined and variable, pause indices can differ substantially between metrics. There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the most prominently transcribed isoform. It is common practice to choose the upstream most TSS, but this will cause the pause index to be artificially deflated. Here, we define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene. The distribution of log<sub>10</sub> pause index values and median pause index value are output as a PDF file (Figure 3).      
+RNA polymerases that are associated with gene bodies efficiently incorporate nucleotides during the run-on reaction under most conditions, but promoter proximal paused RNA polymerase require high salt or detergent to run-on efficiently [@rougvie1988rna; @core2012defining]. Therefore, the pause index, or the density of signal in the promoter-proximal pause region divided by density in the gene body, is an indirect measure of run-on efficiency. Since pause windows are user-defined and variable, pause indices can differ substantially based on how they are calculated. 
+
+To determine the coverage of PRO-seq signal in genomic intervals it is convienent to convert the genomic signal to a BED6 file format. Although we are not correcting enzymatic sequence bias in this workflow, we use `seqOutBias` with the `--no-scale` option to convert the BAM file. We include the `--tail-edge` option to realign the end of the read so that the exact position of RNA Polymerase is specified in the BED6 output file. The `--out-split-pairends` option separates all the paired end reads and `--stranded` prints strand information in column 6. 
+
+
 \scriptsize
 ```bash
+#convert to bigWig and BED6
+seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
+    --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
+    --tail-edge --read-size=$read_size
+
+#counts reads in pause region
 coverageBed -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
     awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
@@ -384,13 +386,19 @@ coverageBed -counts -s -a ${name}_pause_counts_body_coordinates.bed \
     -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
+```
+\normalsize
 
+We use an R script to calculate pause indices and plot the distribution of log<sub>10</sub> pause index values as a PDF (Figure 3).  
+
+\scriptsize
+```bash
 pause_index.R ${name}_pause_body.bed
 ```
 \normalsize
 ## Estimate nascent RNA purity with exon / intron density ratio
 
-RNA-seq primarily measures mature transcripts, so exons density far exceeds intron density. However, exon and intron densities are comparable for nascent RNA-seq. For calculation of this metric, the first exon is excluded because pausing occurs in this region and artifically inflates the exon density. The distribution of log<sub>10</sub> exon density to intron density ratios is output as a PDF with the median value included in the plot. Calculating the exon density to intron density ratio complements rDNA alignment rate as a metric to quantify nascent RNA purity. 
+Exon and intron densities within each gene are comparable in nascent RNA-seq data. In contrast, RNA-seq primarily measures mature transcripts and exon density far exceeds intron density. We can infer mature RNA contamination in PRO-seq libraries if we detect a high exon density to intron density ratio. We exclude contributions from the first exon because pausing occurs in this region and artifically inflates the exon density. The distribution of log<sub>10</sub> exon density to intron density ratios is output as a PDF (Figure 4). This metric complements rDNA alignment rate to determine nascent RNA purity. 
 \scriptsize
 ```bash
 coverageBed -counts -s -a $annotation_prefix.introns.bed \
@@ -406,7 +414,7 @@ exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
 \normalsize
 ## Remove intermediate files and zip raw sequencing files
 
-Calculating these quality control metrics necessitates many intermediate files. Many files are unused output from various processing steps, but many are only used briefly for counting reads before and after processing. FASTQ files are large and rarely used in downstream analyses, so the following code chunk removes intermediate FASTQ files and compresses the original files. 
+Calculating these quality control metrics necessitates many intermediate files. Many files are unused output from various processing steps or only used briefly. FASTQ files are large and rarely used in downstream analyses, so the following code chunk removes intermediate FASTQ files and compresses the original files. 
 \scriptsize
 ```bash
 rm ${name}_PE1_short.fastq
@@ -434,7 +442,7 @@ gzip ${name}_PE2.fastq
 \normalsize
 ## Process all files in series
 
-It is a useful exercise to run through the code chunks above individually and look at each output to gain further understanding of each step. A full understanding of the workflow allows the end user to modify the steps to account for modifications in the PRO-seq protocol. However, automation of routine processing and analysis is more practical once a workflow is established. Below, we provide a simple shell script loop that will process each set of files in series. This loop can be easily adapted to perform all processing in parallel using a job scheduler and submission of a batch script for each set of input files.
+We present the deconstructed workflow above because it is helpful to run through the code chunks individually to gain further understanding of each step. A more complete understanding of the processes allows the user to modify steps based on PRO-seq protocol variations. However, automation of routine processing and analysis is more practical once a workflow is established. Below, we provide a shell script loop that will process each set of paired end files in series. This loop can be adapted to perform all processing in parallel using a job scheduler and submission of a batch script for each set of paired end input files.
 
 \scriptsize
 ```bash
