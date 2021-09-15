@@ -313,14 +313,14 @@ echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metric
 ## Mappability rate
 90 PERCENT STILL GOOD??
 
-The vast majority of reads should map concordantly to the genome. Alignment rates for successful PRO-seq experiments are typically above 85%. Again, we use `samtools` and 'wc -l` to count concordantly aligned reads in the BAM alignment file and the pre-alignment FASTQ files and divide to calculate the concordant alignment rate. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
+The vast majority of reads should map concordantly to the genome. Alignment rates for successful PRO-seq experiments are typically above 80%. Again, we use `samtools` and 'wc -l` to count concordantly aligned reads in the BAM alignment file and the pre-alignment FASTQ files and divide to calculate the concordant alignment rate. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
 \scriptsize
 ```bash
 map_pe1=$(samtools view -c -f 0x42 ${name}.bam)
 pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
 alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
 
-echo -e "$alignment_rate\t$name\t0.85\tAlignment Rate" >> ${name}_QC_metrics.txt
+echo -e "$alignment_rate\t$name\t0.80\tAlignment Rate" >> ${name}_QC_metrics.txt
 ```
 \normalsize
 ## Complexity and theoretical read depth
@@ -507,7 +507,7 @@ do
     map_pe1=$(samtools view -c -f 0x42 ${name}.bam)
     pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
     alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
-    echo -e "$alignment_rate\t$name\t0.85\tAlignment Rate" >> ${name}_QC_metrics.txt
+    echo -e "$alignment_rate\t$name\t0.80\tAlignment Rate" >> ${name}_QC_metrics.txt
     echo 'plotting and calculating complexity for' $name
     fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
     echo 'calculating and plotting theoretical sequencing depth' 
