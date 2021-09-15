@@ -331,11 +331,7 @@ fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
 \normalsize
 
-Sequencing depth requirements vary depending upon downstream applications and the size/gene density of the genome. We recommend three replicates and over 10 million concordantly aligned reads per replicate for differential expression analysis with human cells. Data driven approaches to define gene annotations or  identify regulatory elements require higher sequencing depth. We need two factors to calculate the raw read depth necessary to achieve a specified target condordantly aligned depth. The first value is the fraction of raw PE1 reads that do not contain adapter/adapter ligation products or small inserts: `$factorX`. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome: `$factorY`.  
-
-
-Processing steps upstream of deduplication, such as removing adapter/adapter reads, also reduce the number of informative reads and are considered in determining the theoretical raw read depth that is required to achieve a target number of aligned reads.
-
+Sequencing depth requirements vary depending upon downstream applications and the size/gene density of the genome. We recommend three replicates and over 10 million concordantly aligned reads per replicate for differential expression analysis with human cells. Data driven approaches to define gene annotations or  identify regulatory elements require higher sequencing depth. We need two factors to calculate the raw read depth necessary to achieve a specified target condordantly aligned depth. The first value is the fraction of raw PE1 reads that do not contain adapter/adapter ligation products or small inserts: `$factorX`. The second value is the fraction of deduplicated reads that align concordantly to the non-rDNA genome: `$factorY`. Finally, we run `fqComplexity` and specify the `-x` and `-y` options to fit an asymptotic regression model to the factor-scaled log file. `fqComplexity` searches for and reuses the previous log file to avoid unnecessarily repeating subsampling and deduplication. We use the equation and constants printed in the PDF output (Figure 2B) to determine the practicality of increasing depth using the same libraries.   
 
 \scriptsize
 ```bash
@@ -352,17 +348,11 @@ PE1_dedup=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
 
 #divide
 factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
-```
-\normalsize
-Invoke `fqComplexity` and specify the `-x` and `-y` options to fit an asymptotic regression model to the factor-scaled log file.
-\scriptsize
-```bash
+
+#re-run with factors
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
 ```
 \normalsize
-Counterintuitively, you can have a high quality and complex library that is not practical to sequence to further depth because the number of adapter/adapter
-reads is too high. The QC metrics should be considered to determine whether the library is high quality. If the library is deemed high quality and low sequencing depth, use the equation printed in the PDF output (Figure 2B) to determine the practicality of increasing depth using the same libraries.   
-
 
 ## Convert genomic PRO-seq signal into the BED6 format
 
