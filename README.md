@@ -311,7 +311,6 @@ echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metric
 \normalsize
 
 ## Mappability rate
-90 PERCENT STILL GOOD??
 
 The vast majority of reads should map concordantly to the genome. Alignment rates for successful PRO-seq experiments are typically above 80%. Again, we use `samtools` and 'wc -l` to count concordantly aligned reads in the BAM alignment file and the pre-alignment FASTQ files and divide to calculate the concordant alignment rate. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
 \scriptsize
@@ -609,5 +608,6 @@ differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DM
 
 Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
 
+# Figure Legends
 
 # References
