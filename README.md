@@ -591,9 +591,6 @@ Differential expression analysis is a common first step after routine RNA-seq an
 
 \scriptsize
 ```bash
-annotation_prefix=Homo_sapiens.GRCh38.104 
-sort -k1,1 -k2,2n $annotation_prefix.bed > $annotation_prefix.sorted.bed 
-
 for filename in *_not_scaled_PE1.bed
 do
     name=$(echo $filename | awk -F"_not_scaled_PE1.bed" '{print $1}')
@@ -604,9 +601,9 @@ done
 paste -d'\t' *_gene_counts.txt > Estrogen_treatment_PRO_gene_counts.txt
 
 differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_DMSO Estrogen_treatment
-
 ```
 \normalsize
+
 # Conclusions
 
 Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
