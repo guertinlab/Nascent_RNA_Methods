@@ -587,7 +587,7 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 \normalsize
 ## Differential expression with DESeq2
 
-Differential expression analysis is a common first step after routine RNA-seq and PRO-seq data processing. Below we outline the `bedtools` commands to count reads within gene annotations and we provide an `R` script for differentially expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene.  For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but we recommend more sophisticated methods to define primary transcripts [@anderson2020defining; zhao2021deconvolution]. The `R` script requires three ordered arguments: 1) a file with the signal counts for each gene in every even row, 2) the prefix for the baseline experimental condition for which to compare (often termed "untreated"), 3) prefix name for the output PDF plot (Figure 6). 
+Differential expression analysis is a common first step after routine RNA-seq and PRO-seq data processing. Below we present the `bedtools` commands to count reads within gene annotations and we provide an `R` script for differential expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene. For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but there are more accurate methods to define primary transcripts [@anderson2020defining; zhao2021deconvolution]. The `R` script requires three ordered arguments: 1) a file with the signal counts for each gene in every even row, 2) the prefix for the baseline experimental condition for which to compare (often termed "untreated"), 3) prefix name for the output PDF plot (Figure 6). 
 
 \scriptsize
 ```bash
@@ -603,7 +603,7 @@ do
 done
 paste -d'\t' *_gene_counts.txt > Estrogen_treatment_PRO_gene_counts.txt
 
-differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_Starved_DMSO Estrogen_treatment
+differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_DMSO Estrogen_treatment
 
 ```
 \normalsize
