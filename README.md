@@ -270,7 +270,7 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 \normalsize
 ## Remove reads aligning to rDNA
   
-While between 70 - 80% of stable RNA is rRNA, generally less than 10% of the nascent RNA arises from rRNA. By first aligning to the rDNA, we can later estimate nascent RNA purity. Any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in artifactual spikes at regions in the genome that share homology with the rDNA locus. Before aligning to the genome, we first align reads to rDNA and use `samtools fastq` and the `-f 0x4` flag to specify that only unmapped reads are included in the FASTQ output.    
+While between 70 - 80% of stable RNA is rRNA, generally less than 10% of the nascent RNA arises from rRNA. By first aligning to the rDNA, we can later estimate nascent RNA purity. Any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in artifactual spikes at regions in the genome that share homology with the rDNA locus. Before aligning to the genome, we first align reads to rDNA and use `samtools fastq` and the `-f 0x4` flag to specify that only unmapped reads are included in the FASTQ output. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.    
 \scriptsize
 ```bash
 bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
@@ -291,7 +291,7 @@ bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.
 ```
 \normalsize
 ## rDNA alignment rate
-In order to calculate the rDNA alignment rate, we first count the total number of rDNA-aligned reads. Next, we use `samtools view -c -f 0x42` to count the PE1 reads that concordantly align to hg38 and not to rDNA. Lastly, we calculate the fraction of aligned reads that map to the rDNA locus and print it to the QC metrics file.    
+In order to calculate the rDNA alignment rate, we first count the total number of rDNA-aligned reads. Next, we use `samtools view -c -f 0x42` to count the PE1 reads that concordantly align to hg38 and not to rDNA. Lastly, we calculate the fraction of aligned reads that map to the rDNA locus and print it to the QC metrics file.     
 \scriptsize
 ```bash
 #calculate the total number of rDNA-aligned reads
@@ -312,7 +312,7 @@ echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metric
 
 ## Mappability rate
 
-The vast majority of reads should map concordantly to the genome. Alignment rates for successful PRO-seq experiments are typically above 80%. Again, we use `samtools` and 'wc -l` to count concordantly aligned reads in the BAM alignment file and the pre-alignment FASTQ files and divide to calculate the concordant alignment rate. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.
+The majority of reads should map concordantly to the genome. We expect an alignment rate above 80% for high quality libraries. As described above, we use `samtools` and 'wc -l` to count concordantly aligned reads in the BAM alignment file and the pre-alignment FASTQ files and divide these values to calculate the alignment rate. 
 \scriptsize
 ```bash
 map_pe1=$(samtools view -c -f 0x42 ${name}.bam)
@@ -323,7 +323,7 @@ echo -e "$alignment_rate\t$name\t0.80\tAlignment Rate" >> ${name}_QC_metrics.txt
 ```
 \normalsize
 ## Complexity and theoretical read depth
-The proportion of PCR duplicates in the library will affect how much additional sequencing is require to achieve a target number of concordantly aligned reads. We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity, and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The proportion of reads that are PCR duplicates is related to read depth. At very low read depth nearly all reads are unique and you asymptotically approach the actual PCR duplicate rate at very high read depth. We calculate PCR duplicate rate using the FASTQ file with adapter/adapter products and small inserts removed. The FASTQ file is subsampled into deciles and the intermediate files are deduplicated. We print the the input and deduplicated counts to the `${name}_complexity.log` file. The R code fits an asymptotic regression model to the data. Finally we, plot the data and the model and print the total number of unique reads at a read depth of 10 million (Figure 2A). We recommend that at least 7.5 million reads of 10 million are unique (i.e. 75% of reads are unique if you were to align exactly 10 million reads). 
+The proportion of PCR duplicates in a library affects how many additional raw sequencing reads are required to achieve a target number of concordantly aligned reads. We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity, and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The proportion of reads that are PCR duplicates is related to read depth. At very low read depth nearly all reads are unique; at very high read depth the observed fraction of duplicates approaches the true PCR duplicate rate of the library. We calculate the PCR duplicate rate using the processed FASTQ file without adapter/adapter ligation products or small inserts. The FASTQ file is randomly subsampled to read depths of 10%, 20%, 30%,...,100%, and the intermediate files are deduplicated. We print the total and deduplicated counts for each subsample to the `${name}_complexity.log` file. The R script fits an asymptotic regression model and plots the model and data (Figure 2A). We recommend that at least 75% of reads are unique at a read depth of 10 million. 
 
 
 \scriptsize
