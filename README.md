@@ -314,7 +314,7 @@ echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metric
 
 ## Mappability rate
 
-The majority of reads should map concordantly to the genome. We expect an alignment rate above 80% for high quality libraries. As described above, we use `samtools` and 'wc -l` to count concordantly aligned reads in the BAM alignment file and the pre-alignment FASTQ files and divide these values to calculate the alignment rate. 
+The majority of reads should map concordantly to the genome. We expect an alignment rate above 80% for high quality libraries. As described above, we use `samtools` and `wc -l` to count concordantly aligned reads in the BAM alignment file and the pre-alignment FASTQ files and divide these values to calculate the alignment rate. 
 
 Poor alignment rate most typically arises from poor quality sequencing or microorganism contamination.
 
