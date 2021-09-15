@@ -576,7 +576,7 @@ done
 
 ## Plot all QC metrics
 
-Individual detailed quality controls plots provide valuable information about the data, but each metric can be distilled to a single value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not considered absolute and should only be used as guidelines. Below, we concatenate all the QC metrics for the experiments and plot the results (Figure 5). Thresholds lines are included on the plots. One can quickly glance at the plot to determine whether the QC values fall within the light green shaded area. If values are outside the light green shaded area, then we recommend looking back at the more detailed QC plots to diagnose possible issues with the libraries.  
+Individual plots for each quality control metric provide valuable information about the data, but each plot can be summarized as a single informative value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not absolute and should only be used as guidelines. Below, we concatenate all the summarized metrics for the experiments and plot the results (Figure 5) and thresholds. The user can quickly glance at the plot to determine whether the quality control values fall within the acceptable range, which is shaded light green. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots to diagnose possible issues with the libraries.  
 
 \scriptsize
 ```bash
