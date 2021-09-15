@@ -10,7 +10,7 @@ author:
 
 # Abstract
 
-Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here we deconstruct a recently published genomic nascent RNA processing pipeline (PEPPRO) into its components and link the analyses to the underlying molecular biology. PRO-seq experiments are evolving and variations can be found throughout the literature. The analyses are presented as individual code chunks with comprehensive details so that users can modify the framework to accommodate different protocols. We present the framework to quantify the following quality control metrics: library complexity, nascent RNA purity, nuclear run-on efficiency, alignment rate, sequencing depth, and RNA integrity.        
+Precision genomic run-on assays (PRO-seq) quantify nascent RNA at single nucleotide resolution with strand specificity. Here we deconstruct a recently published genomic nascent RNA processing pipeline (PEPPRO) into its components and link the analyses to the underlying molecular biology. PRO-seq experiments are evolving and variations can be found throughout the literature. The analyses are presented as individual code chunks with comprehensive details so that users can modify the framework to accommodate different protocols. We present the framework to quantify the following quality control metrics: library complexity, nascent RNA purity, nuclear run-on efficiency, alignment rate, sequencing depth, and RNA degradation.        
 
 
 # Introduction
@@ -611,14 +611,7 @@ differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_DMSO Estro
 
 # Conclusions
 
-We provide standardized metrics and detailed plots that indicate whether libraries are of sufficiently high quality to warrant downstream analysis.
-
-These metrics 
-
-RNA degradation, alignment rate, nascent RNA purity, library complexity, and run-on efficiency 
-
-
-Analyses are presented in a deconstructed manner to provide flexibility to researchers who wish to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
+We provide standardized metrics and detailed plots that indicate whether libraries are of sufficiently high quality to warrant downstream analysis. The analyses provide information about library complexity, nascent RNA purity, nuclear run-on efficiency, alignment rate, sequencing depth, and RNA degradation. We deconstruct each analysis and provide the biological rationale of each metric. All code and scripts are presented so that researchers can use this framework to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
 
 # Figure Legends
 
