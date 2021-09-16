@@ -78,7 +78,8 @@ Next, move the software dependencies and R scripts to a directory within the `$P
 
 This workflow requires a single core computer, 8Gb of RAM, and 200Gb hardrive space. However, more RAM and multiple cores will greatly reduce compute time.
 
-# Reference genomes
+# Genome and annotation downloads and processing
+## Reference genomes
 
 PRO-seq experiments have been performed in a variety of organisms including yeast [@booth2016divergence], Drosophila [@kwak2013precise; @duarte2016transcription], and humans [@core2014analysis]. Analysis of the data requires alignment to a reference genome annotation. The first step is to use `wget` to retrieve the reference genome. Many websites host the assembly data in FASTA format, such as the human genome build 38 shown below retrieved from the UCSC genome browser server [@karolchik2003ucsc]. The `gunzip` command unzips the reference genome file and `bowtie2-build` indexes the file to allow for efficient alignment. The code also retrieves, unzips, and builds the human rDNA reference genome [@stolarczyk2020refgenie] so that we can calculate rDNA alignment rates as a metric for nascent RNA purity.
 
@@ -444,7 +445,7 @@ gzip ${name}_PE1.fastq
 gzip ${name}_PE2.fastq
 ```
 \normalsize
-## Process all files in series
+# Pipeline Automation
 
 We present the deconstructed workflow above because it is helpful to run through the code chunks individually to gain further understanding of each step. A more complete understanding of the processes allows the user to modify steps based on PRO-seq protocol variations. However, automation of routine processing and analysis is more practical once a workflow is established. Below, we provide a shell script loop that will process each set of paired end files in series. This loop can be adapted to perform all processing in parallel using a job scheduler and submission of a batch script for each set of paired end input files.
 
@@ -578,7 +579,7 @@ done
 ```
 \normalsize
 
-## Plot all QC metrics
+# Plot all QC metrics
 
 Individual plots for each quality control metric provide valuable information about the data, but each plot can be summarized as a single informative value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not absolute and should only be used as guidelines. Below, we concatenate all the summarized metrics for the experiments and plot the results (Figure 5) and thresholds. The user can quickly glance at the plot to determine whether the quality control values fall within the acceptable range, which is shaded light green. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots to diagnose possible issues with the libraries. The user can change the term "Estrogen_treatment_PRO" to a description of their own experiment to name the output file. 
 
@@ -589,7 +590,7 @@ cat *_QC_metrics.txt | awk '!x[$0]++' > project_QC_metrics.txt
 plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 ```
 \normalsize
-## Differential expression with DESeq2
+# Differential expression with DESeq2
 
 Differential expression analysis is a common first step after routine RNA-seq and PRO-seq data processing. Below we present the `bedtools` commands to count reads within gene annotations and we provide an `R` script for differential expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene. For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but there are more accurate methods to define primary transcripts [@anderson2020defining; zhao2021deconvolution]. The `R` script requires three ordered arguments: 1) a file with the signal counts for each gene in every even row, 2) the prefix for the baseline experimental condition for which to compare (often termed "untreated"), 3) prefix name for the output PDF plot (Figure 6). 
 
