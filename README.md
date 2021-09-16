@@ -4,7 +4,13 @@ author:
 - "Thomas G. Scott"
 - "André L. Martins"
 - "Michael J. Guertin"
-
+output: 
+  pdf_document:
+     citation_package: natbib
+bibliography: nascent_rna_methods.bib
+biblio-style: spbasic
+header-includes:
+  - \setcitestyle{numbers}
 ---
 
 
