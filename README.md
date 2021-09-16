@@ -18,7 +18,7 @@ Genomic nascent RNA profiling assays, such as precision genomic run-on (PRO-seq)
 
 # Software and hardware requirements
 
-Many processes, downloads, and software installations are reused throughout the analyses. Although we refer to these as "one-time" steps, users should periodically check for updated annotations and new software releases. 
+Many processes, downloads, and software installations are reused throughout the analyses. Users should periodically check for updated annotations and new software releases. 
 
 ## Dependencies, software, and scripts
 
@@ -74,7 +74,11 @@ chmod +x differential_expression.R
 
 Next, move the software dependencies and R scripts to a directory within the `$PATH` variable.      
 
-## Reference genomes
+## Hardware
+
+This workflow requires a single core computer, 8Gb of RAM, and 200Gb hardrive space. However, more RAM and multiple cores will greatly reduce compute time.
+
+# Reference genomes
 
 PRO-seq experiments have been performed in a variety of organisms including yeast [@booth2016divergence], Drosophila [@kwak2013precise; @duarte2016transcription], and humans [@core2014analysis]. Analysis of the data requires alignment to a reference genome annotation. The first step is to use `wget` to retrieve the reference genome. Many websites host the assembly data in FASTA format, such as the human genome build 38 shown below retrieved from the UCSC genome browser server [@karolchik2003ucsc]. The `gunzip` command unzips the reference genome file and `bowtie2-build` indexes the file to allow for efficient alignment. The code also retrieves, unzips, and builds the human rDNA reference genome [@stolarczyk2020refgenie] so that we can calculate rDNA alignment rates as a metric for nascent RNA purity.
 
