@@ -606,7 +606,7 @@ differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_DMSO Estro
 
 # Conclusions
 
-We provide standardized metrics and detailed plots that indicate whether libraries are of sufficiently high quality to warrant downstream analysis. The presented analyses provide information about RNA degradation, nascent RNA purity, alignment rate, library complexity, ¿sequencing depth?, and nuclear run-on efficiency. We deconstruct each analysis and explain the biological rationale of each metric. All code and scripts are presented so that researchers can use this framework to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
+We provide standardized metrics and detailed plots that indicate whether libraries are of sufficiently high quality to warrant downstream analysis. The presented analyses provide information about RNA degradation, nascent RNA purity, alignment rate, library complexity, and nuclear run-on efficiency. We deconstruct each analysis and explain the biological rationale of each metric. All code and scripts are presented so that researchers can use this framework to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
 
 # Figure Legends
 
