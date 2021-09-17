@@ -620,9 +620,13 @@ Figure 1. Library insert size is a measure of RNA degradation. The plot illustra
 
 Figure 2. Library complexity captures information about PCR over-amplification and read depth requirements for a sample. A) We subsample the pre-processed FASTQ file to the indicated read depths (x-axis) and plot this value against the number of unique subsampled reads (y-axis). The plot includes an asymptotic regression model curve and prints the estimated number of unique reads at a read depth of 10 million. B) We use the fraction of raw PE1 reads that do not contain adapter ligation products or small inserts, the fraction of deduplicated reads that align concordantly to the non-rDNA genome, and the data from panel A to derive the theoretical read depth equation and parameters.    
 
-Figure 3. Pause index is a measure of efficient nuclear run-on. The plot illustrates the distribution of log<sub>10</sub> pause indices and includes a threshold line at a raw pause index of 10. A median pause index below 10 indicates that the library may be of poor quality.
+Figure 3. Pause index is a measure of nuclear run-on efficiency. The plot illustrates the distribution of log<sub>10</sub> pause indices and includes a threshold line at a raw pause index of 10. A median pause index below 10 indicates that the library may be of poor quality.
 
-Figure 4. 
+Figure 4. Exon density to intron density ratio is a measure of nascent RNA purity. The plot illustrates the distribution of log<sub>10</sub> exon density to intron density ratios and includes a threshold line at a raw ratio of 2. A median ratio below 2 indicates mature RNA contamination is low.
+
+Figure 5.
+
+Figure 6.
 
 
 # References
