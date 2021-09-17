@@ -618,8 +618,9 @@ We provide standardized metrics and detailed plots that indicate whether librari
 
 Figure 1. Library insert size is a measure of RNA degradation. The plot illustrates the frequency (y-axis) of insert size lengths (x-axis) for the PRO-seq library. The ratio of read counts in the 10 - 20 base range (blue region) to read counts in the 30 - 40 range (red region) is the degradation ratio. High quaily PRO-seq libraries have degradation ratios less than 1.
 
-Figure 2. Library complexity captures information about PCR over-amplification and read depth requirements for a sample. A) B)  
+Figure 2. Library complexity captures information about PCR over-amplification and read depth requirements for a sample. A) We subsample the pre-processed FASTQ file to the indicated read depths (x-axis) and plot this value against the number of unique subsampled reads (y-axis). The plot includes an asymptotic regression model curve and prints the estimated number of unique reads at a read depth of 10 million. B) We use the fraction of raw PE1 reads that do not contain adapter ligation products or small inserts, the fraction of deduplicated reads that align concordantly to the non-rDNA genome, and the data from panel A to derive the theoretical read depth equation and parameters.    
 
+Figure 3. 
 
 
 # References
