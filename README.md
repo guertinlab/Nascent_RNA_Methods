@@ -624,9 +624,9 @@ Figure 3. Pause index is a measure of nuclear run-on efficiency. The plot illust
 
 Figure 4. Exon density to intron density ratio is a measure of nascent RNA purity. The plot illustrates the distribution of log<sub>10</sub> exon density to intron density ratios and includes a threshold line at a raw ratio of 2. A median ratio below 2 indicates mature RNA contamination is low.
 
-Figure 5.
+Figure 5. A summary plot illustrates all quality control metrics and their respective recommended thresholds. If all quality control values fall within the shaded light green range, then the libraries are likely of high quality. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots in Figure 1-4 to diagnose possible issues with the libraries.
 
-Figure 6.
+Figure 6. 
 
 
 # References
