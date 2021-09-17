@@ -626,7 +626,7 @@ Figure 4. Exon density to intron density ratio is a measure of nascent RNA purit
 
 Figure 5. A summary plot illustrates all quality control metrics and their respective recommended thresholds. If all quality control values fall within the shaded light green range, then the libraries are likely of high quality. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots in Figure 1-4 to diagnose possible issues with the libraries.
 
-Figure 6. 
+Figure 6. Differential expression analysis quantifies transcriptomic changes upon treating T47D cells with estrogen for an hour. Genes in red are classified as activated and repressed based on a false discovery rate of 0.05. 
 
 
 # References
