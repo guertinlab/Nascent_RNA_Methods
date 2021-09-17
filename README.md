@@ -200,7 +200,7 @@ prealign_rdna_index=human_rDNA
 \normalsize
 ## Preprocessing 
 
-Navigate to the folder that contains the sequencing files, save the basename as a variable, and `gunzip` the files.
+Download the files from GEO accession GSE184378, navigate to the folder that contains the sequencing files, save the basename as a variable, and `gunzip` the files.
 \scriptsize
 ```bash
 cd $directory 
