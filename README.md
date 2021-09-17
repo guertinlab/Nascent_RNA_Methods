@@ -579,7 +579,7 @@ done
 ```
 \normalsize
 
-# Plot all QC metrics
+# Summary plot of all QC metrics
 
 Individual plots for each quality control metric provide valuable information about the data, but each plot can be summarized as a single informative value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not absolute and should only be used as guidelines. Below, we concatenate all the summarized metrics for the experiments and plot the results (Figure 5) and thresholds. The user can quickly glance at the plot to determine whether the quality control values fall within the acceptable range, which is shaded light green. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots to diagnose possible issues with the libraries. The user can change the term "Estrogen_treatment_PRO" to a description of their own experiment to name the output file. 
 
