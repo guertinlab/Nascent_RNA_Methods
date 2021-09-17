@@ -430,17 +430,17 @@ rm ${name}_PE1_noadap_trimmed.fastq
 rm ${name}_PE1_dedup.fastq
 rm ${name}_PE1_processed.fastq
 rm ${name}_PE2_processed.fastq
-rm ${name}_PE1_noadap.fastq.paired.fq
+rm ${name}_PE1_noadap.fastq.paired.fq   
 rm ${name}_PE2_noadap.fastq.paired.fq
+rm ${name}_PE1_noadap.fastq.single.fq
+rm ${name}_PE2_noadap.fastq.single.fq
 rm ${name}_PE1.rDNA.fastq.paired.fq
 rm ${name}_PE1.rDNA.fastq.single.fq
 rm ${name}_PE2_processed.fastq.paired.fq
 rm ${name}_PE2_processed.fastq.single.fq
-rm ${name}_PE1_noadap.fastq.single.fq
-rm ${name}_PE2_noadap.fastq.single.fq
 rm ${name}.extendedFrags.fastq.gz
-rm ${name}.notCombined_2.fastq.gz
 rm ${name}.notCombined_1.fastq.gz
+rm ${name}.notCombined_2.fastq.gz
 gzip ${name}_PE1.fastq
 gzip ${name}_PE2.fastq
 ```
@@ -452,14 +452,15 @@ We present the deconstructed workflow above because it is helpful to run through
 \scriptsize
 ```bash
 #initialize variables
-directory=/Users/guertinlab/sequencing_run1_series 
+directory=/Users/genomicslab/sequencing_run1_series
+filename=T47D_DMSO_rep1_PE1.fastq.gz
 annotation_prefix=Homo_sapiens.GRCh38.104 
 UMI_length=8
 read_size=62
 cores=6
 genome=hg38.fa
 genome_index=hg38
-prealign_rdna=human_rDNA
+prealign_rdna_index=human_rDNA
 
 cd $directory 
 
@@ -563,15 +564,15 @@ do
     rm ${name}_PE2_processed.fastq
     rm ${name}_PE1_noadap.fastq.paired.fq   
     rm ${name}_PE2_noadap.fastq.paired.fq
+    rm ${name}_PE1_noadap.fastq.single.fq
+    rm ${name}_PE2_noadap.fastq.single.fq
     rm ${name}_PE1.rDNA.fastq.paired.fq
     rm ${name}_PE1.rDNA.fastq.single.fq
     rm ${name}_PE2_processed.fastq.paired.fq
     rm ${name}_PE2_processed.fastq.single.fq
-    rm ${name}_PE1_noadap.fastq.single.fq
-    rm ${name}_PE2_noadap.fastq.single.fq
     rm ${name}.extendedFrags.fastq.gz
-    rm ${name}.notCombined_2.fastq.gz
     rm ${name}.notCombined_1.fastq.gz
+    rm ${name}.notCombined_2.fastq.gz
     gzip ${name}_PE1.fastq
     gzip ${name}_PE2.fastq
 done
