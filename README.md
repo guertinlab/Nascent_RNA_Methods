@@ -496,7 +496,7 @@ do
     seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq > ${name}_PE1_processed.fastq
     seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to rDNA and removing aligned reads'
-    bowtie2 -p $cores -x $prealign_rdna -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
+    bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
         samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
     reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
