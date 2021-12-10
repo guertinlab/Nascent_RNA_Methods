@@ -20,7 +20,7 @@ rownames(x) = x[,1]
 x = x[,seq(2,to=ncol(x),by=2)]
 x = x[,c(grep(Args[2], colnames(x)), c(1:length(colnames(x)))[!(c(1:length(colnames(x))) %in% grep(Args[2], colnames(x)))])]
 
-n.untreated = as.numeric(length(grep(Args[2], colnames(x))))
+n.untreated = as.numeric(length(grep(Args[2], colnames(x)))) #this breaks if the untreated string name is included in the treated
 n.treated = ncol(x) - n.untreated
 sample.conditions = factor(c(rep("untreated",n.untreated), rep("treated",n.treated)),
                            levels=c("untreated","treated"))
