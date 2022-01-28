@@ -1,0 +1,65 @@
+#! /bin/sh
+
+# put this in your path: normalize_bedGraph.py
+# put this executable in your path: normalization_factor.R
+while getopts "c:" OPTION
+do
+    case $OPTION in
+	c)
+	    chrSizes=$OPTARG
+	    ;;
+	
+    esac
+done
+
+echo "\nPrior to running PRO_normalization, you need to install the following dependencies:\nnormalize_bedGraph.py https://github.com/lh3/seqtk\nnormalization_factor.R https://github.com/guertinlab/fqdedup\n\nPRO_normalization assumes the naming convention CELL_COND_TIME_ETC_rep<#>_<plus><minus>.bigWig\n
+and assumes that you are running the script in the directory with your bigWigs \nPRO_normalization usage:\n  PRO_normalization -c hg38.chrom.sizes \n\n-c is the genome sizes file that can be downloaded from UCSC\n "
+
+if [ -c "$chrSizes" ] ; then
+
+normalization_factor.R
+
+for i in *_rep1_plus.bigWig
+do
+    name=$(echo $i | awk -F"_rep1_plus.bigWig" '{print $1}')
+    basename=$(echo $i | awk -F"_" '{print $1}')
+    # count the number of replicates
+    reps=$(ls ${name}_rep*_plus.bigWig | wc -w | bc)
+    #echo $reps
+    for j in ${name}_rep*_plus.bigWig
+    	do
+    		repNum=$(echo $j | awk -F"rep" '{print $NF}' | awk -F"_plus" '{print $1}')	
+    		#echo $repNum
+    		invscalePlus=$(grep "${name}_rep${repNum}_plus.bigWig" ${basename}_normalization.txt | awk -F" " '{print $2}' | bc)
+    		invscaleMinus=$(grep "${name}_rep${repNum}_minus.bigWig" ${basename}_normalization.txt | awk -F" " '{print $2}' | bc)
+    		echo $invscalePlus
+    		echo $invscaleMinus
+    		# scale to 10 million
+    		invScale=$(expr $invscalePlus + $invscaleMinus)
+    		scale=$(bc <<< "scale=3 ; 10000000 / $invScale")
+    		#scaleMinus=$(bc <<< "scale=3 ; 10000000 / $invscaleMinus")
+    		#echo $scalePlus
+    		#echo $scaleMinus
+    		bigWigToBedGraph ${name}_rep${repNum}_plus.bigWig ${name}_rep${repNum}_plus.bedGraph
+    		bigWigToBedGraph ${name}_rep${repNum}_minus.bigWig ${name}_rep${repNum}_minus.bedGraph
+    		normalize_bedGraph.py -i ${name}_rep${repNum}_plus.bedGraph -s $scale -o ${name}_rep${repNum}_plus_scaled.bedGraph
+    		normalize_bedGraph.py -i ${name}_rep${repNum}_minus.bedGraph -s $scale -o ${name}_rep${repNum}_minus_scaled.bedGraph
+    		bedGraphToBigWig ${name}_rep${repNum}_plus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_plus_scaled.bigWig 
+    		bedGraphToBigWig ${name}_rep${repNum}_minus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_minus_scaled.bigWig 
+    	done
+    plusfiles=$(ls ${name}_rep*_plus.bigWig)
+    bigWigMerge $plusfiles tmpPlus.bg
+    minusfiles=$(ls ${name}_rep*_minus.bigWig)
+    bigWigMerge $minusfiles tmpMinus.bg
+    scaleall=$(bc <<< "scale=4 ; 1.0 / $reps")
+    normalize_bedGraph.py -i tmpPlus.bg -n $scaleall -o ${name}_plus_scaled.bg
+    normalize_bedGraph.py -i tmpMinus.bg -n $scaleall -o ${name}_minus_scaled.bg
+	bedGraphToBigWig ${name}_plus_scaled.bg $chrSizes ${name}_plus_scaled.bigWig 
+	bedGraphToBigWig ${name}_minus_scaled.bg $chrSizes ${name}_minus_scaled.bigWig   
+	rm ${name}_plus_scaled.bg
+	rm ${name}_minus_scaled.bg
+	rm tmpPlus.bg
+	rm tmpMinus.bg
+done
+
+fi
