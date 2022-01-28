@@ -54,7 +54,6 @@ do
     scaleall=$(bc <<< "scale=4 ; 1.0 / $reps")
     normalize_bedGraph.py -i tmpPlus.bg -s $scaleall -o ${name}_plus_scaled.bg
     normalize_bedGraph.py -i tmpMinus.bg -s $scaleall -o ${name}_minus_scaled.bg
-    plus_scaled.bg
     sort -k1,1 -k2,2n ${name}_plus_scaled.bg > ${name}_plus_scaled_sorted.bg
     sort -k1,1 -k2,2n ${name}_minus_scaled.bg > ${name}_minus_scaled_sorted.bg
     bedGraphToBigWig ${name}_plus_scaled_sorted.bg $chrSizes ${name}_plus_scaled.bigWig 
