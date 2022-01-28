@@ -63,6 +63,8 @@ wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/plot_
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/differential_expression.R
 
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/PRO_normalization
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalization_factor.R
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalize_bedGraph.py
 
 chmod +x insert_size.R
 chmod +x fqComplexity
@@ -71,6 +73,10 @@ chmod +x pause_index.R
 chmod +x exon_intron_ratio.R
 chmod +x plot_all_metrics.R
 chmod +x differential_expression.R
+
+chmod +x normalize_bedGraph.py
+chmod +x normalization_factor.R
+chmod +x PRO_normalization
 ```
 \normalsize
 
