@@ -27,7 +27,7 @@ for (replicate.plus.bigWig in Sys.glob(file.path("*_rep*_plus.bigWig"))) {
 	coverage = append(coverage, coverage.bigwig.minus)
 	file.name = append(file.name, replicate.plus.bigWig)
 	file.name = append(file.name, replicate.minus.bigWig)
-	print(coverage)
+	#print(coverage)
 	unload.bigWig(bigwig.plus)
 	unload.bigWig(bigwig.minus)
    	}	
