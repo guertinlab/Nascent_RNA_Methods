@@ -2,6 +2,8 @@
 
 # put this in your path: normalize_bedGraph.py
 # put this executable in your path: normalization_factor.R
+chrSizes=
+
 while getopts "c:" OPTION
 do
     case $OPTION in
