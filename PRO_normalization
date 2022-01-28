@@ -2,7 +2,6 @@
 
 # put this in your path: normalize_bedGraph.py
 # put this executable in your path: normalization_factor.R
-# install bigWig for R https://github.com/andrelmartins/bigWig/blob/master/bigWig/DESCRIPTION
 while getopts "c:" OPTION
 do
     case $OPTION in
@@ -13,7 +12,7 @@ do
     esac
 done
 
-echo "\nPrior to running PRO_normalization, you need to install the following dependencies:\nnormalize_bedGraph.py https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalize_bedGraph.py\nnormalization_factor.R https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalization_factor.R\nDon't forget to put these dependencies in your PATH and make them executable using chmod +x\nAlso istall bigWig for R: https://github.com/andrelmartins/bigWig/blob/master/bigWig/DESCRIPTION\nPRO_normalization assumes the naming convention CELL_COND_TIME_ETC_rep<#>_<plus><minus>.bigWig\nand assumes that you are running the script in the directory with your bigWigs \nPRO_normalization usage:\n  PRO_normalization -c hg38.chrom.sizes \n\n-c is the genome sizes file that can be downloaded from UCSC\n "
+echo "\nPrior to running PRO_normalization, you need to install the following dependencies:\nnormalize_bedGraph.py https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalize_bedGraph.py\nnormalization_factor.R https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalization_factor.R\nDon't forget to put these dependencies in your PATH and make them executable using chmod +x\nPRO_normalization assumes the naming convention CELL_COND_TIME_ETC_rep<#>_<plus><minus>.bigWig\nand assumes that you are running the script in the directory with your bigWigs \nPRO_normalization usage:\n  PRO_normalization -c hg38.chrom.sizes \n\n-c is the genome sizes file that can be downloaded from UCSC\n "
 
 
 if [ $chrSizes ]; then
@@ -37,7 +36,7 @@ do
     		echo $invscaleMinus
     		# scale to 10 million
     		invScale=$(expr $invscalePlus + $invscaleMinus)
-    		scale=$(bc <<< "scale=3 ; 10000000 / $invScale")		    		
+    		scale=$(bc <<< "scale=3 ; 10000000 / $invScale")
     		#scaleMinus=$(bc <<< "scale=3 ; 10000000 / $invscaleMinus")
     		#echo $scalePlus
     		#echo $scaleMinus
@@ -55,12 +54,17 @@ do
     scaleall=$(bc <<< "scale=4 ; 1.0 / $reps")
     normalize_bedGraph.py -i tmpPlus.bg -s $scaleall -o ${name}_plus_scaled.bg
     normalize_bedGraph.py -i tmpMinus.bg -s $scaleall -o ${name}_minus_scaled.bg
-	bedGraphToBigWig ${name}_plus_scaled.bg $chrSizes ${name}_plus_scaled.bigWig 
-	bedGraphToBigWig ${name}_minus_scaled.bg $chrSizes ${name}_minus_scaled.bigWig   
-	rm ${name}_plus_scaled.bg
-	rm ${name}_minus_scaled.bg
-	rm tmpPlus.bg
-	rm tmpMinus.bg
+    plus_scaled.bg
+    sort -k1,1 -k2,2n ${name}_plus_scaled.bg > ${name}_plus_scaled_sorted.bg
+    sort -k1,1 -k2,2n ${name}_minus_scaled.bg > ${name}_minus_scaled_sorted.bg
+    bedGraphToBigWig ${name}_plus_scaled_sorted.bg $chrSizes ${name}_plus_scaled.bigWig 
+    bedGraphToBigWig ${name}_minus_scaled_sorted.bg $chrSizes ${name}_minus_scaled.bigWig   
+    rm ${name}_plus_scaled.bg
+    rm ${name}_minus_scaled.bg
+    rm ${name}_plus_scaled_sorted.bg
+    rm ${name}_minus_scaled_sorted.bg
+    rm tmpPlus.bg
+    rm tmpMinus.bg
 done
 
 fi
