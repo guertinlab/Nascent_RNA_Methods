@@ -62,6 +62,8 @@ wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/exon_
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/plot_all_metrics.R
 wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/differential_expression.R
 
+wget https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/PRO_normalization
+
 chmod +x insert_size.R
 chmod +x fqComplexity
 chmod +x complexity_pro.R
