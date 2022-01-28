@@ -2,8 +2,6 @@
 
 # put this in your path: normalize_bedGraph.py
 # put this executable in your path: normalization_factor.R
-chrSizes=
-
 while getopts "c:" OPTION
 do
     case $OPTION in
@@ -16,11 +14,11 @@ done
 
 echo "\nPrior to running PRO_normalization, you need to install the following dependencies:\nnormalize_bedGraph.py https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalize_bedGraph.py\nnormalization_factor.R https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalization_factor.R\nDon't forget to put these dependencies in your PATH and make them executable using chmod +x\nPRO_normalization assumes the naming convention CELL_COND_TIME_ETC_rep<#>_<plus><minus>.bigWig\nand assumes that you are running the script in the directory with your bigWigs \nPRO_normalization usage:\n  PRO_normalization -c hg38.chrom.sizes \n\n-c is the genome sizes file that can be downloaded from UCSC\n "
 
+echo $chrSizes 
+
 if [ -c "$chrSizes" ]; then
 
 normalization_factor.R
-
-fi
 
 for i in *_rep1_plus.bigWig
 do
@@ -65,3 +63,4 @@ do
 	rm tmpMinus.bg
 done
 
+fi
