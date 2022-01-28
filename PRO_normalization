@@ -36,14 +36,15 @@ do
     		echo $invscaleMinus
     		# scale to 10 million
     		invScale=$(expr $invscalePlus + $invscaleMinus)
-    		scale=$(bc <<< "scale=3 ; 10000000 / $invScale")
+    		scale=$(bc <<< "scale=3 ; 10000000 / $invScale")		    		
+		minscale=$(bc <<< "scale=3 ; -10000000 / $invScale")
     		#scaleMinus=$(bc <<< "scale=3 ; 10000000 / $invscaleMinus")
     		#echo $scalePlus
     		#echo $scaleMinus
     		bigWigToBedGraph ${name}_rep${repNum}_plus.bigWig ${name}_rep${repNum}_plus.bedGraph
     		bigWigToBedGraph ${name}_rep${repNum}_minus.bigWig ${name}_rep${repNum}_minus.bedGraph
     		normalize_bedGraph.py -i ${name}_rep${repNum}_plus.bedGraph -s $scale -o ${name}_rep${repNum}_plus_scaled.bedGraph
-    		normalize_bedGraph.py -i ${name}_rep${repNum}_minus.bedGraph -s $scale -o ${name}_rep${repNum}_minus_scaled.bedGraph
+    		normalize_bedGraph.py -i ${name}_rep${repNum}_minus.bedGraph -s $minscale -o ${name}_rep${repNum}_minus_scaled.bedGraph
     		bedGraphToBigWig ${name}_rep${repNum}_plus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_plus_scaled.bigWig 
     		bedGraphToBigWig ${name}_rep${repNum}_minus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_minus_scaled.bigWig 
     	done
