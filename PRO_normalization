@@ -20,6 +20,8 @@ if [ -c "$chrSizes" ]; then
 
 normalization_factor.R
 
+fi
+
 for i in *_rep1_plus.bigWig
 do
     name=$(echo $i | awk -F"_rep1_plus.bigWig" '{print $1}')
@@ -63,4 +65,3 @@ do
 	rm tmpMinus.bg
 done
 
-fi
