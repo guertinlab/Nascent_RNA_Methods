@@ -13,7 +13,7 @@ def function(infile, scale, outfilename):
     for line in open(infile):
             #print line
         splitline=line.split()
-        outfile.write("%s\t%s\t%s\t%s\n"%(splitline[0], splitline[1], splitline[2], Decimal(splitline[3])*Decimal(scale)))
+        outfile.write("%s\t%s\t%s\t%s\n"%(splitline[0], splitline[1], splitline[2], abs(Decimal(splitline[3])*Decimal(scale))))
     outfile.close()
     
 def main(argv):
