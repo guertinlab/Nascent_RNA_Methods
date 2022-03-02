@@ -247,7 +247,7 @@ echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 The next step reverse complements the sequences to correspond to the appropriate strand of the reference genome and removes reads that are shorter than 10 bases. 
 \scriptsize
 ```bash
-seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
+seqtk seq -L $((UMI_length+10)) ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
 ```
 \normalsize
 A proportion of short nascent RNAs from different cells are identical because their 5´ end corresponds to a transcription start site, and their 3´ end is located within a focused promoter-proximal pause region [@kwak2013precise]. Therefore, we cannot filter potential PCR duplicates based on whether two independent pairs of reads have identical paired end read alignments. We rely on the presence of the UMI to remove PCR duplicates from the PE1 FASTQ file. We use `fastq_pair` to deduplicate the PE2 read by pairing with the deduplicated PE1 file. 
@@ -257,7 +257,7 @@ A proportion of short nascent RNAs from different cells are identical because th
 fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
 
 #this variable is a near-optimal table size value for fastq_pair: 
-PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
+PE1_noAdapter=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
 
 #pair FASTQ files
 fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
@@ -278,7 +278,7 @@ insert_size.R ${name}.hist ${UMI_length}
 The final processing step removes the UMI from both paired end reads and reverse complements the paired end 2 read.
 \scriptsize
 ```bash
-seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq > ${name}_PE1_processed.fastq
+seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
 seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 \normalsize
