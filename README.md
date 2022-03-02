@@ -42,6 +42,8 @@ We present specialized software and scripts herein, but much of the workflow dep
 
 `seqtk` : a multifunctional toolkit for processing sequence files, including trimming a defined number of bases from the ends of reads and reverse complementing sequencing reads. https://github.com/lh3/seqtk [@li2013seqtk]
 
+`sratoolkit` : a suite of tools that interface with data deposited into the Sequence Read Archive. https://github.com/ncbi/sra-tools
+
 `wget` : retrieves files from a wide range of internet protocols. https://www.gnu.org/software/wget/
 
 `R` packages:
@@ -196,7 +198,7 @@ We first initialize six variables:
 \scriptsize
 ```bash
 directory=/Users/genomicslab/sequencing_run1 
-filename=T47D_DMSO_rep1_PE1.fastq.gz
+filename=T47D_DMSO_rep1_PE1.fastq
 annotation_prefix=Homo_sapiens.GRCh38.104 
 UMI_length=8
 read_size=62
@@ -211,10 +213,13 @@ prealign_rdna_index=human_rDNA
 Download the files from GEO accession GSE184378, navigate to the folder that contains the sequencing files, save the basename as a variable, and `gunzip` the files.
 \scriptsize
 ```bash
+mkdir -p $directory 
 cd $directory 
-name=$(echo $filename | awk -F"_PE1.fastq.gz" '{print $1}')
+fasterq-dump SRR15944159
+mv SRR15944159_1.fastq T47D_DMSO_rep1_PE1.fastq
+mv SRR15944159_2.fastq T47D_DMSO_rep1_PE2.fastq
+name=$(echo $filename | awk -F"_PE1.fastq" '{print $1}')
 echo $name
-gunzip ${name}_PE*.fastq.gz
 ```
 \normalsize 
 ## Processing reads 
