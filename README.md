@@ -466,7 +466,6 @@ We present the deconstructed workflow above because it is helpful to run through
 ```bash
 #initialize variables
 directory=/Users/genomicslab/sequencing_run1_series
-filename=T47D_DMSO_rep1_PE1.fastq.gz
 annotation_prefix=Homo_sapiens.GRCh38.104 
 UMI_length=8
 read_size=62
@@ -475,14 +474,25 @@ genome=hg38.fa
 genome_index=hg38
 prealign_rdna_index=human_rDNA
 
+mkdir -p $directory 
 cd $directory 
+fasterq-dump SRR15944159
+fasterq-dump SRR15944160
+fasterq-dump SRR15944161
+fasterq-dump SRR15944162
+mv SRR15944159_1.fastq T47D_DMSO_rep1_PE1.fastq
+mv SRR15944159_2.fastq T47D_DMSO_rep1_PE2.fastq
+mv SRR15944160_1.fastq T47D_DMSO_rep2_PE1.fastq
+mv SRR15944160_2.fastq T47D_DMSO_rep2_PE2.fastq
+mv SRR15944161_1.fastq T47D_Estrogen_rep1_PE1.fastq
+mv SRR15944161_2.fastq T47D_Estrogen_rep1_PE2.fastq
+mv SRR15944162_1.fastq T47D_Estrogen_rep2_PE1.fastq
+mv SRR15944162_2.fastq T47D_Estrogen_rep2_PE2.fastq
 
-for filename in *PE1.fastq.gz
+for filename in *PE1.fastq
 do
-    name=$(echo $filename | awk -F"_PE1.fastq.gz" '{print $1}')
+    name=$(echo $filename | awk -F"_PE1.fastq" '{print $1}')
     echo $name
-    echo 'unzipping raw' $name 'files'
-    gunzip ${name}_PE*.fastq.gz
     echo 'removing dual adapter ligations and calculating the fraction of adapter/adapters in' $name
     cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 \
         -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq \
