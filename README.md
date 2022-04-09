@@ -249,7 +249,7 @@ echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
 echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
 ```
 \normalsize
-The next step reverse complements the sequences to correspond to the appropriate strand of the reference genome and removes reads that are shorter than 10 bases. 
+The next step removes reads that are shorter than 10 bases. 
 \scriptsize
 ```bash
 seqtk seq -L $((UMI_length+10)) ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
@@ -280,10 +280,10 @@ insert_size.R ${name}.hist ${UMI_length}
 \normalsize
 ## Processing for alignment
 
-The final processing step removes the UMI from both paired end reads and reverse complements the paired end 2 read.
+The final processing step removes the UMI from and reverse complements both paired end reads. 
 \scriptsize
 ```bash
-seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
+seqtk trimfq -b ${UMI_length} ${name}_PE1_dedup.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
 seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
 ```
 \normalsize
