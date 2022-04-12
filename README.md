@@ -515,7 +515,7 @@ do
     echo 'calculating and plotting RNA insert sizes from' $name
     flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_dedup.fastq.paired.fq \
         ${name}_PE2_noadap.fastq.paired.fq -o ${name}
-    Rscript $HOME/bin/insert_size.R ${name}.hist ${UMI_length}
+    insert_size.R ${name}.hist ${UMI_length}
     echo 'trimming off the UMI from' $name
     seqtk trimfq -b ${UMI_length} ${name}_PE1_dedup.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
     seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
@@ -565,7 +565,7 @@ do
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
-    Rscript $HOME/bin/pause_index.R ${name}_pause_body.bed
+    pause_index.R ${name}_pause_body.bed
     echo 'Calculating exon density / intron density as a metric for nascent RNA purity for' $name
     coverageBed -counts -s -a $annotation_prefix.introns.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
@@ -573,7 +573,7 @@ do
     coverageBed -counts -s -a $annotation_prefix.no.first.exons.named.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
-    Rscript $HOME/bin/exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
+    exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
     echo 'Counting reads in genes for' $name
     coverageBed -counts -s -a $annotation_prefix.bed -b ${name}_not_scaled_PE1.bed | \
         awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
