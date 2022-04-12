@@ -495,29 +495,29 @@ do
     name=$(echo $filename | awk -F"_PE1.fastq" '{print $1}')
     echo $name
     echo 'removing dual adapter ligations and calculating the fraction of adapter/adapters in' $name
-    cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 \
-        -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq -o ${name}_PE1_noadap.fastq \
-        --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
-    cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 \
-        -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq -o ${name}_PE2_noadap.fastq \
-        --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
+    cutadapt --cores=$cores -m $((UMI_length+2)) -O 1 -a TGGAATTCTCGGGTGCCAAGG ${name}_PE1.fastq \
+        -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
+    cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq \
+        -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
+    echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
+    echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
     PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
     PE1_w_Adapter=$(wc -l ${name}_PE1_short.fastq | awk '{print $1/4}')
     AAligation=$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)
     echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
     echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
-    echo 'removing short RNA insertions and reverse complementing in' $name
-    seqtk seq -L $((UMI_length+10)) -r ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq
+    echo 'removing short RNA insertions in' $name
+    seqtk seq -L $((UMI_length+10)) ${name}_PE1_noadap.fastq > ${name}_PE1_noadap_trimmed.fastq 
     echo 'removing PCR duplicates from' $name
     fqdedup -i ${name}_PE1_noadap_trimmed.fastq -o ${name}_PE1_dedup.fastq
-    PE1_noAdapter=$(wc -l ${name}_PE1_noadap.fastq | awk '{print $1/4}')
-    fastq_pair -t $PE1_noAdapter ${name}_PE1_noadap.fastq ${name}_PE2_noadap.fastq
+    PE1_noAdapter=$(wc -l ${name}_PE1_dedup.fastq | awk '{print $1/4}')
+    fastq_pair -t $PE1_noAdapter ${name}_PE1_dedup.fastq ${name}_PE2_noadap.fastq
     echo 'calculating and plotting RNA insert sizes from' $name
-    flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_noadap.fastq.paired.fq \
+    flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_dedup.fastq.paired.fq \
         ${name}_PE2_noadap.fastq.paired.fq -o ${name}
-    insert_size.R ${name}.hist ${UMI_length}
+    Rscript $HOME/bin/insert_size.R ${name}.hist ${UMI_length}
     echo 'trimming off the UMI from' $name
-    seqtk trimfq -e ${UMI_length} ${name}_PE1_dedup.fastq > ${name}_PE1_processed.fastq
+    seqtk trimfq -b ${UMI_length} ${name}_PE1_dedup.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
     seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to rDNA and removing aligned reads'
     bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
@@ -526,16 +526,15 @@ do
     fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to the genome'
     bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
-        -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | \
-        samtools view -b - | samtools sort - -o ${name}.bam
+        -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | \
+        samtools sort - -o ${name}.bam
     PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
     PE1_post_rDNA=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     total_rDNA=$(echo "$(($PE1_prior_rDNA-$PE1_post_rDNA))") 
-    echo 'calculating rDNA and genomic alignment rates for' $name
     concordant_pe1=$(samtools view -c -f 0x42 ${name}.bam)
     total=$(echo "$(($concordant_pe1+$total_rDNA))")
     rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total" | bc)
-    echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
+    echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
     map_pe1=$(samtools view -c -f 0x42 ${name}.bam)
     pre_alignment=$(wc -l ${name}_PE1.rDNA.fastq.paired.fq | awk '{print $1/4}')
     alignment_rate=$(echo "scale=2 ; $map_pe1 / $pre_alignment" | bc)
@@ -556,19 +555,17 @@ do
     seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
         --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
         --tail-edge --read-size=$read_size
-    echo 'Calculating pause indices for' $name  
     coverageBed -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
-        awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
+    awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
     join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
         awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | \
-        awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' |  \
-        awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | \
-        sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
+        awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' | \
+        awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' > ${name}_pause_counts_body_coordinates.bed
     coverageBed -counts -s -a ${name}_pause_counts_body_coordinates.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
-    pause_index.R ${name}_pause_body.bed
+    Rscript $HOME/bin/pause_index.R ${name}_pause_body.bed
     echo 'Calculating exon density / intron density as a metric for nascent RNA purity for' $name
     coverageBed -counts -s -a $annotation_prefix.introns.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
@@ -576,8 +573,10 @@ do
     coverageBed -counts -s -a $annotation_prefix.no.first.exons.named.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
-    exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
-    #clean up intermediate files and gzip
+    Rscript $HOME/bin/exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
+    echo 'Counting reads in genes for' $name
+    coverageBed -counts -s -a $annotation_prefix.bed -b ${name}_not_scaled_PE1.bed | \
+        awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
     rm ${name}_PE1_short.fastq
     rm ${name}_PE2_short.fastq
     rm ${name}_PE1_noadap.fastq
