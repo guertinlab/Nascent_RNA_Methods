@@ -210,7 +210,7 @@ prealign_rdna_index=human_rDNA
 \normalsize
 ## Preprocessing 
 
-Download the files from GEO accession GSE184378, navigate to the folder that contains the sequencing files, save the basename as a variable, and `gunzip` the files.
+Make a working directory, download the files from GEO accession GSE184378, and save the basename as a variable.
 \scriptsize
 ```bash
 mkdir -p $directory 
@@ -218,6 +218,7 @@ cd $directory
 fasterq-dump SRR15944159
 mv SRR15944159_1.fastq T47D_DMSO_rep1_PE1.fastq
 mv SRR15944159_2.fastq T47D_DMSO_rep1_PE2.fastq
+filename=T47D_DMSO_rep1_PE1.fastq
 name=$(echo $filename | awk -F"_PE1.fastq" '{print $1}')
 echo $name
 ```
