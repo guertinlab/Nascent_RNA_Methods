@@ -574,9 +574,6 @@ do
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
     exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
-    echo 'Counting reads in genes for' $name
-    coverageBed -counts -s -a $annotation_prefix.bed -b ${name}_not_scaled_PE1.bed | \
-        awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
     rm ${name}_PE1_short.fastq
     rm ${name}_PE2_short.fastq
     rm ${name}_PE1_noadap.fastq
