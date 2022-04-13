@@ -499,8 +499,6 @@ do
         -o ${name}_PE1_noadap.fastq --too-short-output ${name}_PE1_short.fastq > ${name}_PE1_cutadapt.txt
     cutadapt --cores=$cores -m $((UMI_length+10)) -O 1 -a GATCGTCGGACTGTAGAACTCTGAAC ${name}_PE2.fastq \
         -o ${name}_PE2_noadap.fastq --too-short-output ${name}_PE2_short.fastq > ${name}_PE2_cutadapt.txt
-    echo -e  "value\texperiment\tthreshold\tmetric" > ${name}_QC_metrics.txt
-    echo -e "$AAligation\t$name\t0.80\tAdapter/Adapter" >> ${name}_QC_metrics.txt
     PE1_total=$(wc -l ${name}_PE1.fastq | awk '{print $1/4}')
     PE1_w_Adapter=$(wc -l ${name}_PE1_short.fastq | awk '{print $1/4}')
     AAligation=$(echo "scale=2 ; $PE1_w_Adapter / $PE1_total" | bc)
