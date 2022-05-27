@@ -47,9 +47,9 @@ do
     		bedGraphToBigWig ${name}_rep${repNum}_plus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_plus_scaled.bigWig 
     		bedGraphToBigWig ${name}_rep${repNum}_minus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_minus_scaled.bigWig 
     	done
-    plusfiles=$(ls ${name}_rep*_plus.bigWig)
+    plusfiles=$(ls ${name}_rep*_plus_scaled.bigWig)
     bigWigMerge $plusfiles tmpPlus.bg
-    minusfiles=$(ls ${name}_rep*_minus.bigWig)
+    minusfiles=$(${name}_rep*_minus_scaled.bigWig)
     bigWigMerge -threshold=-10000000000 $minusfiles tmpMinus.bg
     scaleall=$(bc <<< "scale=4 ; 1.0 / $reps")
     normalize_bedGraph.py -i tmpPlus.bg -s $scaleall -o ${name}_plus_scaled.bg
