@@ -49,7 +49,7 @@ do
     	done
     plusfiles=$(ls ${name}_rep*_plus_scaled.bigWig)
     bigWigMerge $plusfiles tmpPlus.bg
-    minusfiles=$(${name}_rep*_minus_scaled.bigWig)
+    minusfiles=$(ls ${name}_rep*_minus_scaled.bigWig)
     bigWigMerge -threshold=-10000000000 $minusfiles tmpMinus.bg
     scaleall=$(bc <<< "scale=4 ; 1.0 / $reps")
     normalize_bedGraph.py -i tmpPlus.bg -s $scaleall -o ${name}_plus_scaled.bg
