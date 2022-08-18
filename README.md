@@ -137,7 +137,7 @@ awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     awk '{OFS="\t";} {print $1,$4,$5,$10,$14,$7}' | \
     sed 's/";//g' | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | \
-    sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.bed
 ```
 \normalsize
 The following operations output: 1) a set of exons that excludes all instances of first exons, 2) all potential pause regions for each gene, and 3) all introns.   There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the most prominently transcribed isoform. We define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene. 
@@ -389,9 +389,12 @@ To determine the coverage of PRO-seq signal in genomic intervals it is convienen
 seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
     --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
     --tail-edge --read-size=$read_size
+#Remove chromosomes not in the gene annotation file and sort for use in mapBed
+grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > tmpfile 
+mv tmpfile ${name}_not_scaled_PE1.bed 
 
-#counts reads in pause region
-coverageBed -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
+#count reads in pause region
+mapBed -null "0" -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
     awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
 
 #discard anything with chr and strand inconsistencies
@@ -401,7 +404,7 @@ join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
     awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' > ${name}_pause_counts_body_coordinates.bed
 
 #column ten is Pause index
-coverageBed -counts -s -a ${name}_pause_counts_body_coordinates.bed \
+mapBed -null "0" -s -a ${name}_pause_counts_body_coordinates.bed \
     -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
@@ -420,11 +423,11 @@ pause_index.R ${name}_pause_body.bed
 Exon and intron densities within each gene are comparable in nascent RNA-seq data. In contrast, RNA-seq primarily measures mature transcripts and exon density far exceeds intron density. We can infer mature RNA contamination in PRO-seq libraries if we detect a high exon density to intron density ratio. We exclude contributions from the first exon because pausing occurs in this region and artifically inflates the exon density. The distribution of log<sub>10</sub> exon density to intron density ratios is output as a PDF (Figure 4). This metric complements rDNA alignment rate to determine nascent RNA purity. 
 \scriptsize
 ```bash
-coverageBed -counts -s -a $annotation_prefix.introns.bed \
+mapBed -null "0" -s -a $annotation_prefix.introns.bed \
     -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
     awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
 
-coverageBed -counts -s -a $annotation_prefix.no.first.exons.named.bed \
+mapBed -null "0" -s -a $annotation_prefix.no.first.exons.named.bed \
     -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
     awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
 
@@ -553,22 +556,24 @@ do
     seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
         --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
         --tail-edge --read-size=$read_size
-    coverageBed -counts -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
+    grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > tmpfile 
+    mv tmpfile ${name}_not_scaled_PE1.bed 
+    mapBed -null "0" -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
     awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
     join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
         awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | \
         awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' | \
         awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' > ${name}_pause_counts_body_coordinates.bed
-    coverageBed -counts -s -a ${name}_pause_counts_body_coordinates.bed \
+    mapBed -null "0" -s -a ${name}_pause_counts_body_coordinates.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$5/100,$7/($3 - $2)}' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$8/$9}' > ${name}_pause_body.bed
     pause_index.R ${name}_pause_body.bed
     echo 'Calculating exon density / intron density as a metric for nascent RNA purity for' $name
-    coverageBed -counts -s -a $annotation_prefix.introns.bed \
+    mapBed -null "0" -s -a $annotation_prefix.introns.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$5,$5,$6,$7,($3 - $2)}' > ${name}_intron_counts.bed
-    coverageBed -counts -s -a $annotation_prefix.no.first.exons.named.bed \
+    mapBed -null "0" -s -a $annotation_prefix.no.first.exons.named.bed \
         -b ${name}_not_scaled_PE1.bed | awk '$7>0' | \
         awk '{OFS="\t";} {print $1,$2,$3,$4,$4,$6,$7,($3 - $2)}' > ${name}_exon_counts.bed
     exon_intron_ratio.R ${name}_exon_counts.bed ${name}_intron_counts.bed
@@ -609,7 +614,7 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 \normalsize
 # Differential expression with DESeq2
 
-Differential expression analysis is a common first step after routine RNA-seq and PRO-seq data processing. Below we present the `bedtools` commands to count reads within gene annotations and we provide an `R` script for differential expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene. For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but there are more accurate methods to define primary transcripts [@anderson2020defining; @zhao2021deconvolution]. The `R` script requires three ordered arguments: 1) a file with the signal counts for each gene in every even row, 2) the prefix for the baseline experimental condition for which to compare (often termed "untreated"), 3) prefix name for the output PDF plot (Figure 6). 
+Differential expression analysis is a common first step after routine RNA-seq and PRO-seq data processing. Below we present the `bedtools` command to count reads within gene annotations and we provide an `R` script for differential expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene. For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but there are more accurate methods to define primary transcripts [@anderson2020defining; @zhao2021deconvolution]. The `R` script requires three ordered arguments: 1) a file with the signal counts for each gene in every even row, 2) the prefix for the baseline experimental condition for which to compare (often termed "untreated"), 3) prefix name for the output PDF plot (Figure 6). 
 
 \scriptsize
 ```bash
@@ -617,7 +622,7 @@ for filename in *_not_scaled_PE1.bed
 do
     name=$(echo $filename | awk -F"_not_scaled_PE1.bed" '{print $1}')
     echo -e  "\t${name}" > ${name}_gene_counts.txt
-    coverageBed -counts -s -a $annotation_prefix.bed -b $filename | \
+     mapBed -null "0" -s -a $annotation_prefix.bed -b $filename | \
         awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
 done
 paste -d'\t' *_gene_counts.txt > Estrogen_treatment_PRO_gene_counts.txt
