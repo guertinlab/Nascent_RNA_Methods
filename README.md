@@ -303,7 +303,7 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 While between 70 - 80% of stable RNA is rRNA, generally less than 10% of the nascent RNA arises from rRNA. By first aligning to the rDNA, we can later estimate nascent RNA purity. Any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in artifactual spikes at regions in the genome that share homology with the rDNA locus. Before aligning to the genome, we first align reads to rDNA and use `samtools fastq` and the `-f 0x4` flag to specify that only unmapped reads are included in the FASTQ output. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.    
 \scriptsize
 ```bash
-bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
+bowtie2 -p $((cores-2)) -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
     samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
 
 #this removes PE2-aligned reads with a rDNA-aligned mate
@@ -315,7 +315,7 @@ fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
 The last processing step for individual libraries is to align to the genome. We invoke the `--rf` flag to account for the fact that we reverse complemented both reads. The `samtools` commands convert the file to a compressed binary BAM format and sort the reads. 
 \scriptsize
 ```bash
-bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
+bowtie2 -p $((cores-2)) --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
     -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | \
     samtools sort - -o ${name}.bam
 ```
@@ -483,7 +483,7 @@ directory=/Users/genomicslab/sequencing_run1_series
 annotation_prefix=Homo_sapiens.GRCh38.104 
 UMI_length=8
 read_size=62
-cores=6
+cores=10
 genome=hg38.fa
 genome_index=hg38
 prealign_rdna_index=human_rDNA
@@ -533,12 +533,12 @@ do
     seqtk trimfq -b ${UMI_length} ${name}_PE1_dedup.fastq | seqtk seq -r - > ${name}_PE1_processed.fastq
     seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to rDNA and removing aligned reads'
-    bowtie2 -p $cores -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
+    bowtie2 -p $((cores-2)) -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
         samtools sort -n - | samtools fastq -f 0x4 - > ${name}_PE1.rDNA.fastq
     reads=$(wc -l ${name}_PE1.rDNA.fastq | awk '{print $1/4}')
     fastq_pair -t $reads ${name}_PE1.rDNA.fastq ${name}_PE2_processed.fastq
     echo 'aligning' $name 'to the genome'
-    bowtie2 -p $cores --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
+    bowtie2 -p $((cores-2)) --maxins 1000 -x $genome_index --rf -1 ${name}_PE1.rDNA.fastq.paired.fq \
         -2 ${name}_PE2_processed.fastq.paired.fq 2>${name}_bowtie2.log | samtools view -b - | \
         samtools sort - -o ${name}.bam
     PE1_prior_rDNA=$(wc -l ${name}_PE1_processed.fastq | awk '{print $1/4}')
