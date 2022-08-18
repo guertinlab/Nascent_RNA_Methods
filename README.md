@@ -102,6 +102,10 @@ bowtie2-build hg38.fa hg38
 wget https://github.com/databio/ref_decoy/raw/master/human_rDNA.fa.gz
 gunzip human_rDNA.fa.gz
 bowtie2-build human_rDNA.fa human_rDNA
+
+#Compute mappability for the given read length and the k-mer that corresponds to each possible read alignment position
+#This is the most time-consuming step of the seqOutBias command but can be completed once before processing the sequencing data
+seqOutBias seqtable hg38.fa --read-size=62
 ```
 \normalsize
 
@@ -195,6 +199,9 @@ We first initialize six variables:
 `$genome_index`: the basename (including the path) of the genome index files from `bowtie2-build`.
 
 `$prealign_rdna_index`: the basename (including the path) of the prealign rDNA index files from `bowtie2-build`.
+
+`$tallymer` and `$table`: outputs of the seqOutBias command above for a given genome and read length.
+
 \scriptsize
 ```bash
 directory=/Users/genomicslab/sequencing_run1 
@@ -206,6 +213,9 @@ cores=6
 genome=hg38.fa
 genome_index=hg38
 prealign_rdna_index=human_rDNA
+tallymer=hg38.tal_${read_size}.gtTxt.gz
+table=hg38_${read_size}.4.2.2.tbl
+
 ```
 \normalsize
 ## Preprocessing 
@@ -386,9 +396,9 @@ To determine the coverage of PRO-seq signal in genomic intervals it is convienen
 \scriptsize
 ```bash
 #convert to bigWig and BED6
-seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
+seqOutBias scale $table ${name}.bam --no-scale --stranded --bed-stranded-positive \
     --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
-    --tail-edge --read-size=$read_size
+    --tail-edge --read-size=$read_size --tallymer=$tallymer
 #Remove chromosomes not in the gene annotation file and sort for use in mapBed
 grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > tmpfile 
 mv tmpfile ${name}_not_scaled_PE1.bed 
@@ -477,6 +487,8 @@ cores=6
 genome=hg38.fa
 genome_index=hg38
 prealign_rdna_index=human_rDNA
+tallymer=hg38.tal_${read_size}.gtTxt.gz
+table=hg38_${read_size}.4.2.2.tbl
 
 mkdir -p $directory 
 cd $directory 
@@ -553,9 +565,9 @@ do
     factorY=$(echo "scale=2 ; $concordant_pe1 / $PE1_dedup" | bc)
     fqComplexity -i ${name}_PE1_noadap_trimmed.fastq -x $factorX -y $factorY
     echo 'Separating paired end reads and creating genomic BED and bigWig intensity files for' $name
-    seqOutBias $genome ${name}.bam --no-scale --stranded --bed-stranded-positive \
+    seqOutBias scale $table ${name}.bam --no-scale --stranded --bed-stranded-positive \
         --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
-        --tail-edge --read-size=$read_size
+        --tail-edge --read-size=$read_size --tallymer=$tallymer
     grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > tmpfile 
     mv tmpfile ${name}_not_scaled_PE1.bed 
     mapBed -null "0" -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
