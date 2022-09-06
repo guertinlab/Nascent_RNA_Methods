@@ -400,8 +400,8 @@ seqOutBias scale $table ${name}.bam --no-scale --stranded --bed-stranded-positiv
     --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
     --tail-edge --read-size=$read_size --tallymer=$tallymer
 #Remove chromosomes not in the gene annotation file and sort for use in mapBed
-grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > tmpfile 
-mv tmpfile ${name}_not_scaled_PE1.bed 
+grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > ${name}_tmp.txt
+mv ${name}_tmp.txt ${name}_not_scaled_PE1.bed 
 
 #count reads in pause region
 mapBed -null "0" -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
@@ -568,8 +568,8 @@ do
     seqOutBias scale $table ${name}.bam --no-scale --stranded --bed-stranded-positive \
         --bw=$name.bigWig --bed=$name.bed --out-split-pairends --only-paired \
         --tail-edge --read-size=$read_size --tallymer=$tallymer
-    grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > tmpfile 
-    mv tmpfile ${name}_not_scaled_PE1.bed 
+    grep -v "random" ${name}_not_scaled_PE1.bed | grep -v "chrUn" | grep -v "chrEBV" | sort -k1,1 -k2,2n > ${name}_tmp.txt 
+    mv ${name}_tmp.txt ${name}_not_scaled_PE1.bed 
     mapBed -null "0" -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.bed | \
     awk '$7>0' | sort -k5,5 -k7,7nr | sort -k5,5 -u > ${name}_pause.bed
     join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
