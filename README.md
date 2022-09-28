@@ -135,13 +135,22 @@ grep 'exon_number' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | \
     sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.all.exons.bed
 
-#extract all complete gene annotations
+#extract all complete gene annotations, sorted for use with join
 awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
     sed 's/^/chr/' | \
     awk '{OFS="\t";} {print $1,$4,$5,$10,$14,$7}' | \
     sed 's/";//g' | \
     sed 's/"//g' | sed 's/chrMT/chrM/g' | \
-    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}.bed
+    sort -k5,5 > Homo_sapiens.GRCh38.${release}.bed
+    
+#extract all complete gene annotations, sorted for use with bedtools map
+awk '$3 == "gene"' Homo_sapiens.GRCh38.${release}.chr.gtf | \
+    sed 's/^/chr/' | \
+    awk '{OFS="\t";} {print $1,$4,$5,$10,$14,$7}' | \
+    sed 's/";//g' | \
+    sed 's/"//g' | sed 's/chrMT/chrM/g' | \
+    sort -k1,1 -k2,2n > Homo_sapiens.GRCh38.${release}_sorted.bed
+ 
 ```
 \normalsize
 The following operations output: 1) a set of exons that excludes all instances of first exons, 2) all potential pause regions for each gene, and 3) all introns.   There are many exon 1 gene annotations depending on gene isoforms and the upstream most annotated TSS is not necessarily the most prominently transcribed isoform. We define the pause window for a gene as position 20 - 120 downstream of the most prominent TSS. The most prominent TSS is determined by calculating the density in this 20 - 120 window for all annotated TSSs for each gene and choosing the TSS upstream of the most RNA-polymerase dense region for each gene. 
@@ -634,7 +643,7 @@ for filename in *_not_scaled_PE1.bed
 do
     name=$(echo $filename | awk -F"_not_scaled_PE1.bed" '{print $1}')
     echo -e  "\t${name}" > ${name}_gene_counts.txt
-     mapBed -null "0" -s -a $annotation_prefix.bed -b $filename | \
+     mapBed -null "0" -s -a ${annotation_prefix}_sorted.bed -b $filename | \
         awk '{OFS="\t";} {print $4,$7}' >> ${name}_gene_counts.txt
 done
 paste -d'\t' *_gene_counts.txt > Estrogen_treatment_PRO_gene_counts.txt
