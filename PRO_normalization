@@ -12,26 +12,50 @@ do
     esac
 done
 
-echo "\nPrior to running PRO_normalization, you need to install the following dependencies:\nnormalize_bedGraph.py https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalize_bedGraph.py\nnormalization_factor.R https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalization_factor.R\nbedGraphToBigWig: UCSC tools\nbigWigToBedGraph: UCSC tools\nDon't forget to put these dependencies in your PATH and make them executable using chmod +x\nPRO_normalization assumes the naming convention CELL_COND_TIME_ETC_rep<#>_<plus><minus>.bigWig\nand assumes that you are running the script in the directory with your bigWigs \nPRO_normalization usage:\n  PRO_normalization -c hg38.chrom.sizes \n\n-c is the genome sizes file that can be downloaded from UCSC\n "
+echo -e "\nPrior to running PRO_normalization, you need to install the following dependencies: \
+\n   normalize_bedGraph.py https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalize_bedGraph.py \
+\n   normalization_factor.R https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalization_factor.R \
+\n   bedGraphToBigWig: UCSC tools \
+\n   bigWigToBedGraph: UCSC tools  \
+\n   bigWigMerge: UCSC tools \
+\nDon't forget to put these dependencies in your PATH and make them executable using chmod +x \
+\nPRO_normalization assumes the naming convention CELL_COND_TIME_ETC_rep<#>_<plus><minus>.bigWig for unpaired reads or \
+\nCELL_COND_TIME_ETC_rep<#>_<plus><minus>_PE<1><2>.bigWig for paired reads, \
+\nand assumes that you are running the script in the directory with your bigWigs \
+\nPRO_normalization usage: \
+\n   PRO_normalization -c hg38.chrom.sizes \
+\n   -c is the genome sizes file that can be downloaded from UCSC\n"
 
 
 if [ $chrSizes ]; then
 
 normalization_factor.R
 
-for i in *_rep1_plus.bigWig
+
+for i in *_rep1_plus*bigWig
 do
-    name=$(echo $i | awk -F"_rep1_plus.bigWig" '{print $1}')
-    basename=$(echo $i | awk -F"_" '{print $1}')
+    # Incorporate dynamic filename response
+    name=$(echo $i | awk -F"_rep1_" '{print $1}')
+    celltype=$(echo $i | awk -F"_" '{print $1}')
+   
+    # get filename suffix 
+    sfx=$(echo $i | awk -F "_rep1_" '{print $2}')
+    pair=$(echo $sfx | awk -F "plus" '{print $2}' | cut -d "." -f 1)
+    echo "Current suffix is:" $sfx
+    
     # count the number of replicates
-    reps=$(ls ${name}_rep*_plus.bigWig | wc -w | bc)
+    reps=$(ls ${name}_rep*_${sfx} | wc -w | bc)
     #echo $reps
-    for j in ${name}_rep*_plus.bigWig
+    for j in ${name}_rep*_${sfx}
     	do
-    		repNum=$(echo $j | awk -F"rep" '{print $NF}' | awk -F"_plus" '{print $1}')	
+    		repNum=$(echo $j | awk -F "rep" '{print $NF}' | awk -F "_plus" '{print $1}')	
     		#echo $repNum
-    		invscalePlus=$(grep "${name}_rep${repNum}_plus.bigWig" ${basename}_normalization.txt | awk -F" " '{print $2}' | bc)
-    		invscaleMinus=$(grep "${name}_rep${repNum}_minus.bigWig" ${basename}_normalization.txt | awk -F" " '{print $2}' | bc)
+    		
+    		# Get "PE" designation. Can be empty if input files are not paired
+    		pair=$(echo $j | awk -F "plus" '{print $2}' | cut -d "." -f 1) # includes underscore
+    		
+    		invscalePlus=$(grep "${name}_rep${repNum}_plus${pair}.bigWig" ${celltype}_normalization.txt | awk -F" " '{print $2}' | bc)
+    		invscaleMinus=$(grep "${name}_rep${repNum}_minus${pair}.bigWig" ${celltype}_normalization.txt | awk -F" " '{print $2}' | bc)
     		echo $invscalePlus
     		echo $invscaleMinus
     		# scale to 10 million
@@ -40,30 +64,33 @@ do
     		#scaleMinus=$(bc <<< "scale=3 ; 10000000 / $invscaleMinus")
     		#echo $scalePlus
     		#echo $scaleMinus
-    		bigWigToBedGraph ${name}_rep${repNum}_plus.bigWig ${name}_rep${repNum}_plus.bedGraph
-    		bigWigToBedGraph ${name}_rep${repNum}_minus.bigWig ${name}_rep${repNum}_minus.bedGraph
-    		normalize_bedGraph.py -i ${name}_rep${repNum}_plus.bedGraph -s $scale -o ${name}_rep${repNum}_plus_scaled.bedGraph
-    		normalize_bedGraph.py -i ${name}_rep${repNum}_minus.bedGraph -s $scale -o ${name}_rep${repNum}_minus_scaled.bedGraph
-    		bedGraphToBigWig ${name}_rep${repNum}_plus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_plus_scaled.bigWig 
-    		bedGraphToBigWig ${name}_rep${repNum}_minus_scaled.bedGraph $chrSizes ${name}_rep${repNum}_minus_scaled.bigWig 
+    		
+    		# updated suffixes
+    		bigWigToBedGraph ${name}_rep${repNum}_plus${pair}.bigWig ${name}_rep${repNum}_plus${pair}.bedGraph
+    		bigWigToBedGraph ${name}_rep${repNum}_minus${pair}.bigWig ${name}_rep${repNum}_minus${pair}.bedGraph
+    		normalize_bedGraph.py -i ${name}_rep${repNum}_plus${pair}.bedGraph -s $scale -o ${name}_rep${repNum}_plus${pair}_scaled.bedGraph
+    		normalize_bedGraph.py -i ${name}_rep${repNum}_minus${pair}.bedGraph -s $scale -o ${name}_rep${repNum}_minus${pair}_scaled.bedGraph
+    		bedGraphToBigWig ${name}_rep${repNum}_plus${pair}_scaled.bedGraph $chrSizes ${name}_rep${repNum}_plus${pair}_scaled.bigWig 
+    		bedGraphToBigWig ${name}_rep${repNum}_minus${pair}_scaled.bedGraph $chrSizes ${name}_rep${repNum}_minus${pair}_scaled.bigWig 
     	done
-    plusfiles=$(ls ${name}_rep*_plus_scaled.bigWig)
-    bigWigMerge $plusfiles tmpPlus.bg
-    minusfiles=$(ls ${name}_rep*_minus_scaled.bigWig)
-    bigWigMerge -threshold=-10000000000 $minusfiles tmpMinus.bg
+    # updated suffixes
+    plusfiles=$(ls ${name}_rep*_plus${pair}_scaled.bigWig)
+    bigWigMerge $plusfiles tmpPlus${pair}.bg
+    minusfiles=$(ls ${name}_rep*_minus${pair}_scaled.bigWig)
+    bigWigMerge -threshold=-10000000000 $minusfiles tmpMinus${pair}.bg
     scaleall=$(bc <<< "scale=4 ; 1.0 / $reps")
-    normalize_bedGraph.py -i tmpPlus.bg -s $scaleall -o ${name}_plus_scaled.bg
-    normalize_bedGraph.py -i tmpMinus.bg -s $scaleall -o ${name}_minus_scaled.bg
-    sort -k1,1 -k2,2n ${name}_plus_scaled.bg > ${name}_plus_scaled_sorted.bg
-    sort -k1,1 -k2,2n ${name}_minus_scaled.bg > ${name}_minus_scaled_sorted.bg
-    bedGraphToBigWig ${name}_plus_scaled_sorted.bg $chrSizes ${name}_plus_scaled.bigWig 
-    bedGraphToBigWig ${name}_minus_scaled_sorted.bg $chrSizes ${name}_minus_scaled.bigWig   
-    rm ${name}_plus_scaled.bg
-    rm ${name}_minus_scaled.bg
-    rm ${name}_plus_scaled_sorted.bg
-    rm ${name}_minus_scaled_sorted.bg
-    rm tmpPlus.bg
-    rm tmpMinus.bg
+    normalize_bedGraph.py -i tmpPlus${pair}.bg -s $scaleall -o ${name}_plus${pair}_scaled.bg
+    normalize_bedGraph.py -i tmpMinus${pair}.bg -s $scaleall -o ${name}_minus${pair}_scaled.bg
+    sort -k1,1 -k2,2n ${name}_plus${pair}_scaled.bg > ${name}_plus${pair}_scaled_sorted.bg
+    sort -k1,1 -k2,2n ${name}_minus${pair}_scaled.bg > ${name}_minus${pair}_scaled_sorted.bg
+    bedGraphToBigWig ${name}_plus${pair}_scaled_sorted.bg $chrSizes ${name}_plus${pair}_scaled.bigWig 
+    bedGraphToBigWig ${name}_minus${pair}_scaled_sorted.bg $chrSizes ${name}_minus${pair}_scaled.bigWig   
+    rm ${name}_plus${pair}_scaled.bg
+    rm ${name}_minus${pair}_scaled.bg
+    rm ${name}_plus${pair}_scaled_sorted.bg
+    rm ${name}_minus${pair}_scaled_sorted.bg
+    rm tmpPlus${pair}.bg
+    rm tmpMinus${pair}.bg
 done
 
 fi
