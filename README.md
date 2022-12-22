@@ -1,11 +1,19 @@
 ---
 title: "Processing and evaluating the quality of genome-wide nascent transcription profiling libraries"
 author:
-- "Thomas G. Scott"
-- "André L. Martins"
-- "Michael J. Guertin"
+- Thomas G. Scott^1^
+- André L. Martins^2^
+- Michael J. Guertin*^,2,3^
 ---
+\scriptsize
+^1^Department of Biochemistry and Molecular Genetics, University of Virginia, Charlottesville, Virginia, United States of America 
 
+^2^Center for Cell Analysis and Modeling, University of Connecticut, Farmington, Connecticut, United States of America
+
+^3^Department of Genetics and Genome Sciences, University of Connecticut, Farmington, Connecticut, United States of America
+
+*corresponding author: guertin@uchc.edu
+\normalsize
 
 # Abstract {-}
 
@@ -291,7 +299,14 @@ fastq_pair -t $PE1_noAdapter ${name}_PE1_dedup.fastq ${name}_PE2_noadap.fastq
 ## RNA degradation ratio score
 
 An abundance of short inserts within a library indicates that RNA degradation occurred. We measure RNA degradation by searching for overlap between paired end reads with `flash` and plotting the resultant histogram output with `insert_size.R` (Figure 1). RNA starts to protrude from the RNA Polymerase II exit channel at approximately 20 bases in length, so 20 bases of the nascent RNA is protected from degradation during the run-on. Libraries with a substantial amount of degradation after the run-on step are enriched for species in the range 10 - 20. We empirically found that there are fewer reads within the range of 10 - 20 than within the range of 30 - 40 for high quality libraries [@smith2021peppro]. A degradation ratio of less than 1 indicates a high quality library. This metric becomes unreliable if the protocol includes size selection to remove adapter/adapter ligation products. Size selection inevitably removes some small RNAs and inflates this ratio.
+
+<div align="center">
+![Library insert size is a measure of RNA degradation. The plot illustrates the frequency (y-axis) of insert size lengths (x-axis) for the PRO-seq library. The ratio of read counts in the 10 - 20 base range (blue region) to read counts in the 30 - 40 range (red region) is the degradation ratio. High quailty PRO-seq libraries have degradation ratios less than 1.](Figure_1.pdf)
+</div>
+
 \scriptsize
+
+
 ```bash
 flash -q --compress-prog=gzip --suffix=gz ${name}_PE1_dedup.fastq.paired.fq \
     ${name}_PE2_noadap.fastq.paired.fq -o ${name}
@@ -365,7 +380,13 @@ echo -e "$alignment_rate\t$name\t0.80\tAlignment Rate" >> ${name}_QC_metrics.txt
 ## Complexity and theoretical read depth
 The proportion of PCR duplicates in a library affects how many additional raw sequencing reads are required to achieve a target number of concordantly aligned reads. We developed `fqComplexity` to serve two purposes: 1) calculate the number of reads that are non-PCR duplicates as a metric for complexity, and 2) provide a formula and constants to calculate the theoretical read depth that will result in a user-defined number of concordant aligned reads. The proportion of reads that are PCR duplicates is related to read depth. At very low read depth nearly all reads are unique; at very high read depth the observed fraction of duplicates approaches the true PCR duplicate rate of the library. We calculate the PCR duplicate rate using the processed FASTQ file without adapter/adapter ligation products or small inserts. The FASTQ file is randomly subsampled to read depths of 10%, 20%, 30%,...,100%, and the intermediate files are deduplicated. We print the total and deduplicated counts for each subsample to the `${name}_complexity.log` file. The R script fits an asymptotic regression model and plots the model and data (Figure 2A). We recommend that at least 75% of reads are unique at a read depth of 10 million. 
 
+<div align="center">
+![Library complexity captures information about PCR over-amplification and read depth requirements for a sample. A. We subsample the pre-processed FASTQ file to the indicated read depths (x-axis) and plot this value against the number of unique subsampled reads (y-axis). The plot includes an asymptotic regression model curve and prints the estimated number of unique reads at a read depth of 10 million. B. We use the fraction of raw PE1 reads that do not contain adapter ligation products or small inserts, the fraction of deduplicated reads that align concordantly to the non-rDNA genome, and the data from panel A to derive the theoretical read depth equation and parameters.](Figure_2.pdf)
+</div>
+
 \scriptsize
+
+
 ```bash
 fqComplexity -i ${name}_PE1_noadap_trimmed.fastq
 ```
@@ -430,16 +451,27 @@ mapBed -null "0" -s -a ${name}_pause_counts_body_coordinates.bed \
 ```
 \normalsize
 
-We use an R script to calculate pause indices and plot the distribution of log<sub>10</sub> pause index values as a PDF (Figure 3).  
+We use an R script to calculate pause indices and plot the distribution of log<sub>10</sub> pause index values as a PDF (Figure 3). 
 
 \scriptsize
 ```bash
 pause_index.R ${name}_pause_body.bed
 ```
+
+
+<div align="center">
+![ Pause index is a measure of nuclear run-on efficiency. The plot illustrates the distribution of log~10~ pause indices and includes a threshold line at a raw pause index of 10. A median pause index below 10 indicates that the library may be of poor quality. ](Figure_3.pdf)
+</div>
+
 \normalsize
 ## Estimate nascent RNA purity with exon / intron density ratio
 
 Exon and intron densities within each gene are comparable in nascent RNA-seq data. In contrast, RNA-seq primarily measures mature transcripts and exon density far exceeds intron density. We can infer mature RNA contamination in PRO-seq libraries if we detect a high exon density to intron density ratio. We exclude contributions from the first exon because pausing occurs in this region and artifically inflates the exon density. The distribution of log<sub>10</sub> exon density to intron density ratios is output as a PDF (Figure 4). This metric complements rDNA alignment rate to determine nascent RNA purity. 
+
+<div align="center">
+![Exon density to intron density ratio is a measure of nascent RNA purity. The plot illustrates the distribution of log~10~ exon density to intron density ratios and includes a threshold line at a raw ratio of 2. A median ratio below 2 indicates mature RNA contamination is low.](Figure_4.pdf)
+</div>
+
 \scriptsize
 ```bash
 mapBed -null "0" -s -a $annotation_prefix.introns.bed \
@@ -626,6 +658,11 @@ done
 
 Individual plots for each quality control metric provide valuable information about the data, but each plot can be summarized as a single informative value. We empirically determined thresholds for each value that constitute acceptable libraries. These thresholds are not absolute and should only be used as guidelines. Below, we concatenate all the summarized metrics for the experiments and plot the results (Figure 5) and thresholds. The user can quickly glance at the plot to determine whether the quality control values fall within the acceptable range, which is shaded light green. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots to diagnose possible issues with the libraries. The user can change the term "Estrogen_treatment_PRO" to a description of their own experiment to name the output file. 
 
+<div align="center">
+![A summary plot illustrates all quality control metrics and their respective recommended thresholds. If all quality control values fall within the shaded light green range, then the libraries are likely of high quality. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots in Figures 1-4 to diagnose possible issues with the libraries.](Figure_5.pdf)
+</div>
+
+
 \scriptsize
 ```bash
 cat *_QC_metrics.txt | awk '!x[$0]++' > project_QC_metrics.txt 
@@ -636,6 +673,11 @@ plot_all_metrics.R project_QC_metrics.txt Estrogen_treatment_PRO
 # Differential expression with DESeq2
 
 Differential expression analysis is a common first step after routine RNA-seq and PRO-seq data processing. Below we present the `bedtools` command to count reads within gene annotations and we provide an `R` script for differential expression analysis with `DESeq2`. The script also plots the fold change between conditions and mean expression level for each gene. For simplicity we use the most upstream transcription start site and most downstream transcription termination site for annotations, but there are more accurate methods to define primary transcripts [@anderson2020defining; @zhao2021deconvolution]. The `R` script requires three ordered arguments: 1) a file with the signal counts for each gene in every even row, 2) the prefix for the baseline experimental condition for which to compare (often termed "untreated"), 3) prefix name for the output PDF plot (Figure 6). 
+
+<div align="center">
+![Differential expression analysis quantifies transcriptomic changes upon treating T47D cells with estrogen for an hour. Genes in red are classified as activated and repressed based on a false discovery rate of 0.05.](Figure_6.pdf)
+</div>
+
 
 \scriptsize
 ```bash
@@ -655,20 +697,5 @@ differential_expression.R Estrogen_treatment_PRO_gene_counts.txt T47D_DMSO Estro
 # Conclusions
 
 We provide standardized metrics and detailed plots that indicate whether libraries are of sufficiently high quality to warrant downstream analysis. The presented analyses provide information about RNA degradation, nascent RNA purity, alignment rate, library complexity, and nuclear run-on efficiency. We deconstruct each analysis and explain the biological rationale of each metric. All code and scripts are presented so that researchers can use this framework to develop their own workflows and pipelines, or as Captain Barbossa succinctly stated: “The code is more of what you'd call _guidelines_ than actual rules.”
-
-# Figure Legends
-
-Figure 1. Library insert size is a measure of RNA degradation. The plot illustrates the frequency (y-axis) of insert size lengths (x-axis) for the PRO-seq library. The ratio of read counts in the 10 - 20 base range (blue region) to read counts in the 30 - 40 range (red region) is the degradation ratio. High quaily PRO-seq libraries have degradation ratios less than 1.
-
-Figure 2. Library complexity captures information about PCR over-amplification and read depth requirements for a sample. A) We subsample the pre-processed FASTQ file to the indicated read depths (x-axis) and plot this value against the number of unique subsampled reads (y-axis). The plot includes an asymptotic regression model curve and prints the estimated number of unique reads at a read depth of 10 million. B) We use the fraction of raw PE1 reads that do not contain adapter ligation products or small inserts, the fraction of deduplicated reads that align concordantly to the non-rDNA genome, and the data from panel A to derive the theoretical read depth equation and parameters.    
-
-Figure 3. Pause index is a measure of nuclear run-on efficiency. The plot illustrates the distribution of log<sub>10</sub> pause indices and includes a threshold line at a raw pause index of 10. A median pause index below 10 indicates that the library may be of poor quality.
-
-Figure 4. Exon density to intron density ratio is a measure of nascent RNA purity. The plot illustrates the distribution of log<sub>10</sub> exon density to intron density ratios and includes a threshold line at a raw ratio of 2. A median ratio below 2 indicates mature RNA contamination is low.
-
-Figure 5. A summary plot illustrates all quality control metrics and their respective recommended thresholds. If all quality control values fall within the shaded light green range, then the libraries are likely of high quality. If values are within the dark pink region, then we recommend looking back at the more detailed quality control plots in Figure 1-4 to diagnose possible issues with the libraries.
-
-Figure 6. Differential expression analysis quantifies transcriptomic changes upon treating T47D cells with estrogen for an hour. Genes in red are classified as activated and repressed based on a false discovery rate of 0.05. 
-
 
 # References
