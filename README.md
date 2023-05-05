@@ -441,7 +441,7 @@ mapBed -null "0" -s -a $annotation_prefix.pause.bed -b ${name}_not_scaled_PE1.be
 join -1 5 -2 5 ${name}_pause.bed $annotation_prefix.bed | \
     awk '{OFS="\t";} $2==$8 && $6==$12 {print $2, $3, $4, $1, $6, $7, $9, $10}' | \
     awk '{OFS="\t";} $5 == "+" {print $1,$2+480,$8,$4,$6,$5} $5 == "-" {print $1,$7,$2 - 380,$4,$6,$5}' | \
-    awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' > ${name}_pause_counts_body_coordinates.bed
+    awk  '{OFS="\t";} $3>$2 {print $1,$2,$3,$4,$5,$6}' | sort -k1,1 -k2,2n > ${name}_pause_counts_body_coordinates.bed
 
 #column ten is Pause index
 mapBed -null "0" -s -a ${name}_pause_counts_body_coordinates.bed \
