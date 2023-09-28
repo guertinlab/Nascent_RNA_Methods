@@ -324,7 +324,7 @@ seqtk trimfq -e ${UMI_length} ${name}_PE2_noadap.fastq | seqtk seq -r - > ${name
 \normalsize
 ## Remove reads aligning to rDNA
   
-While between 70 - 80% of stable RNA is rRNA, generally less than 10% of the nascent RNA arises from rRNA. By first aligning to the rDNA, we can later estimate nascent RNA purity. Any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in artifactual spikes at regions in the genome that share homology with the rDNA locus. Before aligning to the genome, we first align reads to rDNA and use `samtools fastq` and the `-f 0x4` flag to specify that only unmapped reads are included in the FASTQ output. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.    
+While between 70 - 80% of stable RNA is rRNA, generally less than 20% of the nascent RNA arises from rRNA. By first aligning to the rDNA, we can later estimate nascent RNA purity. Any reads that map non-uniquely to both rDNA and non-rDNA regions in the genome result in artifactual spikes at regions in the genome that share homology with the rDNA locus. Before aligning to the genome, we first align reads to rDNA and use `samtools fastq` and the `-f 0x4` flag to specify that only unmapped reads are included in the FASTQ output. We recommend the following site to help understand the meaning of samtools flags: https://broadinstitute.github.io/picard/explain-flags.html.    
 \scriptsize
 ```bash
 bowtie2 -p $((cores-2)) -x $prealign_rdna_index -U ${name}_PE1_processed.fastq 2>${name}_bowtie2_rDNA.log | \
@@ -360,7 +360,7 @@ total=$(echo "$(($concordant_pe1+$total_rDNA))")
 #rDNA alignment rate
 rDNA_alignment=$(echo "scale=2 ; $total_rDNA / $total" | bc)
 
-echo -e "$rDNA_alignment\t$name\t0.10\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
+echo -e "$rDNA_alignment\t$name\t0.20\trDNA Alignment Rate" >> ${name}_QC_metrics.txt
 ```
 \normalsize
 
