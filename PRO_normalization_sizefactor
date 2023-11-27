@@ -1,0 +1,104 @@
+#! /bin/sh
+
+# put this in your path: normalize_bedGraph_v2.py
+
+set -e
+usage() { 
+	echo -e "\nPrior to running PRO_normalization, you need to install the following dependencies: \
+	\n   normalize_bedGraph_v2.py https://raw.githubusercontent.com/guertinlab/Nascent_RNA_Methods/main/normalize_bedGraph_v2.py \
+	\n   bedGraphToBigWig: UCSC tools \
+	\n   bigWigToBedGraph: UCSC tools  \
+	\n   bigWigMerge: UCSC tools \
+	\nDon't forget to put these dependencies in your PATH and make them executable using chmod +x \
+	\nPRO_normalization assumes the naming convention CELL_COND_TIME_ETC_rep<#>_<plus><minus>.bigWig for unpaired reads or \
+	\nCELL_COND_TIME_ETC_rep<#>_<plus><minus>_PE<1><2>.bigWig for paired reads, \
+	\nand assumes that you are running the script in the directory with your bigWigs \
+	\nPRO_normalization_sizefactor usage: \
+	\n   PRO_normalization_sizefactor -c hg38.chrom.sizes -z sizeFactorsDataTxtFile \
+	\n   -c is the genome sizes file that can be downloaded from UCSC \
+	\n   -z is a text file containing tab-separated 'replicateName sizeFactor' on each line, where sizeFactor is the one generated from DESeq2 \
+	\n One way to create 'sizeFactorsDataTxtFile' is as follows:= \
+	\n dds = DESeq(deseq.df) \
+	\n size.factors = t(t(dds$sizeFactor)) \
+	\n write.table(size.factors, "sizefactorsFile.txt", sep="\t", quote=F, col.names=F)\n"
+
+	echo "Usage: $0 -c chrSizes -z sizeFactorsDataTxtFile" 1>&2; exit 1; 
+}
+
+while getopts "c:z:" OPTION
+do
+    case $OPTION in
+	c)
+	    chrSizes=$OPTARG
+	    ;;
+	z) sizeFactorsFile=$OPTARG
+		;;
+	*) 
+		usage
+		;;
+    esac
+done
+
+if [ -z "${chrSizes}" ] || [ -z "${sizeFactorsFile}" ]; then
+            usage
+fi
+
+
+if [ $chrSizes ]; then
+
+for i in *_rep1_plus*bigWig
+do
+    # Incorporate dynamic filename response
+    name=$(echo $i | awk -F"_rep1_" '{print $1}')
+    celltype=$(echo $i | awk -F"_" '{print $1}')
+   
+    # get filename suffix 
+    sfx=$(echo $i | awk -F "_rep1_" '{print $2}')
+    pair=$(echo $sfx | awk -F "plus" '{print $2}' | cut -d "." -f 1)
+    echo "Current suffix is:" $sfx
+    
+    # count the number of replicates
+    reps=$(ls ${name}_rep*_${sfx} | wc -w | bc)
+    #echo $reps
+    for j in ${name}_rep*_${sfx}
+    	do
+    		repNum=$(echo $j | awk -F "rep" '{print $NF}' | awk -F "_plus" '{print $1}')	
+    		#echo $repNum
+    		
+    		# Get "PE" designation. Can be empty if input files are not paired
+    		pair=$(echo $j | awk -F "plus" '{print $2}' | cut -d "." -f 1) # includes underscore
+    		
+    		scaleFactor=$(grep ${name}_rep${repNum} ${sizeFactorsFile} | awk -F"\t" '{print $2}' | bc)
+	        # TAKE THE INVERSE - eqn (6) of Anders and Huber, 2010 finds normalized values by dividing counts with sizeFactors	
+                scaleFactor=$(echo "scale=5; 1/${scaleFactor}" | bc)
+		echo "inverse of scaleFactor for ${name}_rep${repNum}: ${scaleFactor}"
+		# updated suffixes
+    		bigWigToBedGraph ${name}_rep${repNum}_plus${pair}.bigWig ${name}_rep${repNum}_plus${pair}.bedGraph
+    		bigWigToBedGraph ${name}_rep${repNum}_minus${pair}.bigWig ${name}_rep${repNum}_minus${pair}.bedGraph
+    		normalize_bedGraph_v2.py -i ${name}_rep${repNum}_plus${pair}.bedGraph -s $scaleFactor -o ${name}_rep${repNum}_plus${pair}_scaled.bedGraph
+    		normalize_bedGraph_v2.py -i ${name}_rep${repNum}_minus${pair}.bedGraph -s $scaleFactor -o ${name}_rep${repNum}_minus${pair}_scaled.bedGraph
+    		bedGraphToBigWig ${name}_rep${repNum}_plus${pair}_scaled.bedGraph $chrSizes ${name}_rep${repNum}_plus${pair}_scaled.bigWig 
+    		bedGraphToBigWig ${name}_rep${repNum}_minus${pair}_scaled.bedGraph $chrSizes ${name}_rep${repNum}_minus${pair}_scaled.bigWig 
+    	done
+    # updated suffixes
+    printf "%s - creating and merging normalized replicate bigWigs\n" ${name}
+    plusfiles=$(ls ${name}_rep*_plus${pair}_scaled.bigWig)
+    bigWigMerge $plusfiles tmpPlus${pair}.bg
+    minusfiles=$(ls ${name}_rep*_minus${pair}_scaled.bigWig)
+    bigWigMerge -threshold=-10000000000 $minusfiles tmpMinus${pair}.bg
+    scaleall=$(bc <<< "scale=4 ; 1.0 / $reps")
+    normalize_bedGraph_v2.py -i tmpPlus${pair}.bg -s $scaleall -o ${name}_plus${pair}_scaled.bg
+    normalize_bedGraph_v2.py -i tmpMinus${pair}.bg -s $scaleall -o ${name}_minus${pair}_scaled.bg
+    sort -k1,1 -k2,2n ${name}_plus${pair}_scaled.bg > ${name}_plus${pair}_scaled_sorted.bg
+    sort -k1,1 -k2,2n ${name}_minus${pair}_scaled.bg > ${name}_minus${pair}_scaled_sorted.bg
+    bedGraphToBigWig ${name}_plus${pair}_scaled_sorted.bg $chrSizes ${name}_plus${pair}_scaled.bigWig 
+    bedGraphToBigWig ${name}_minus${pair}_scaled_sorted.bg $chrSizes ${name}_minus${pair}_scaled.bigWig   
+    rm ${name}_plus${pair}_scaled.bg
+    rm ${name}_minus${pair}_scaled.bg
+    rm ${name}_plus${pair}_scaled_sorted.bg
+    rm ${name}_minus${pair}_scaled_sorted.bg
+    rm tmpPlus${pair}.bg
+    rm tmpMinus${pair}.bg
+done
+
+fi
